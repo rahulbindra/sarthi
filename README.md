@@ -141,6 +141,11 @@ See [DOCS.md](DOCS.md) for the complete routing reference, cost guard details, F
 
 Sarthi collects no data. It is a plain markdown skill file that runs entirely on your machine inside Claude Code. No telemetry, no network calls, no external services. The only tools that make network calls are the ones you explicitly install (graphify, firecrawl, etc.) — Sarthi itself is just routing instructions.
 
+## 💬 Feedback & Support
+
+- **Bug reports / feature requests:** [Open an issue](https://github.com/rahulbindra/sarthi/issues)
+- **Security concerns or sensitive feedback:** rahulbindra@gmail.com
+
 ## 🤝 Contributing
 
 PRs welcome. The routing rules are plain markdown in `skills/sarthi/SKILL.md` — easy to extend for new tools.
