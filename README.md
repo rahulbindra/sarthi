@@ -24,6 +24,24 @@ Sarthi is a Claude Code plugin that acts as an **intelligent routing layer** for
 
 ## ✨ What Sarthi Does
 
+At the start of every session, Sarthi presents a brief welcome that shows which tools are active and lets you skip any of them:
+
+```
+Sarthi ready. Here's what's active this session:
+
+  [1] compound-engineering  — build, debug, review, ship, frontend, strategy, brainstorm
+  [2] graphify              — codebase navigation via knowledge graph
+  [3] morph                 — fast bulk code edits (MCP active)
+  [4] firecrawl             — web research and scraping
+  [5] codex                 — parallel code review and investigation
+  [6] codeburn              — token spend analytics
+  [7] superpowers           — parallel agents, TDD, git worktrees
+
+Skip any tool for this session? Type e.g. "skip 3 5" — or just start working to use all.
+Skipped tools fall back to standard Claude behaviour.
+```
+
+After that, Sarthi:
 - **Detects intent** from your message — build, debug, review, ship, navigate, research, refactor, and more
 - **Routes automatically** to the best available tool in your stack
 - **Falls back gracefully** — works with any combination of tools, or none at all
@@ -49,7 +67,7 @@ Add this to `~/.claude/settings.json` so Sarthi activates automatically at the s
       "hooks": [{
         "type": "command",
         "statusMessage": "Sarthi loading...",
-        "command": "python3 -c \"import json; print(json.dumps({'hookSpecificOutput': {'hookEventName': 'SessionStart', 'additionalContext': 'Act as Sarthi: read ~/.claude/skills/sarthi/SKILL.md and apply its routing rules to every user message this session.'}}))\" "
+        "command": "python3 -c \"import json; print(json.dumps({'hookSpecificOutput': {'hookEventName': 'SessionStart', 'additionalContext': 'Act as Sarthi. Load ~/.claude/skills/sarthi/SKILL.md and follow it exactly, including the Session Onboarding block: detect tools silently, auto-setup graphify if needed, then present the welcome prompt listing active tools and asking the user if they want to skip any before routing.'}}))\" "
       }]
     }]
   }
