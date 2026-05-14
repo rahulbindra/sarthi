@@ -16,38 +16,25 @@
 
 ---
 
-> **Sarthi does not build any of these tools. It is a thin routing layer — a skill file that detects your intent and points Claude at the right tool. All capability, all innovation, and all credit belong entirely to the original tool authors listed below. Please star and support their repos directly.**
-
----
-
-Sarthi is a Claude Code plugin that acts as an **intelligent routing layer** for your AI development stack. Instead of remembering which tool to use when, Sarthi detects your intent from natural language and routes you to the right tool automatically — or falls back gracefully to vanilla Claude if you don't have it installed.
-
-## ✨ What Sarthi Does
-
-At the start of every session, Sarthi presents a brief welcome that shows which tools are active and lets you skip any of them:
-
-```
-Sarthi ready. Here's what's active this session:
-
-  [1] compound-engineering  — build, debug, review, ship, frontend, strategy, brainstorm
-  [2] graphify              — codebase navigation via knowledge graph
-  [3] morph                 — fast bulk code edits (MCP active)
-  [4] firecrawl             — web research and scraping
-  [5] codex                 — parallel code review and investigation
-  [6] codeburn              — token spend analytics
-  [7] superpowers           — parallel agents, TDD, git worktrees
-
-Skip any tool for this session? Type e.g. "skip 3 5" — or just start working to use all.
-Skipped tools fall back to standard Claude behaviour.
-```
-
-After that, Sarthi:
-- **Detects intent** from your message — build, debug, review, ship, navigate, research, refactor, and more
-- **Routes automatically** to the best available tool in your stack
-- **Falls back gracefully** — works with any combination of tools, or none at all
-- **Enforces a cost-guard** — confirms deliverables, catches retry loops, surfaces Morph for bulk edits, offers Codex for reviews
+Sarthi is a Claude Code plugin that acts as an **intelligent routing layer** for your AI development stack. Instead of remembering which tool to use when, describe what you want in plain language — Sarthi detects your intent and routes to the right tool automatically. Falls back gracefully to vanilla Claude if you don't have a tool installed.
 
 ## 📦 Install
+
+### Prerequisites
+
+Sarthi is a router — it needs tools to route to. Install any combination of these before running setup:
+
+| Tool | Install | What it unlocks |
+|------|---------|----------------|
+| [compound-engineering](https://github.com/EveryInc/compound-engineering-plugin) | `/plugin install compound-engineering@compound-engineering-plugin` | Build, debug, review, ship, frontend, strategy |
+| [graphify](https://github.com/safishamsi/graphify) | `pip install graphifyy` | Codebase knowledge graph navigation |
+| [morph](https://github.com/morphllm/morph-claude-code-plugin) | See Morph docs | Fast bulk code edits via MCP |
+| [firecrawl](https://github.com/mendableai/firecrawl) | `/plugin install firecrawl@claude-plugins-official` | Web research and scraping |
+| [codex](https://github.com/openai/codex-plugin-cc) | `/plugin install codex@openai-codex` | Parallel code review |
+| [codeburn](https://github.com/getagentseal/codeburn) | `npm install -g codeburn` | Token spend analytics |
+| [superpowers](https://github.com/obra/superpowers) | `/plugin install superpowers@claude-plugins-official` | Parallel agents, TDD, worktrees |
+
+Sarthi works with any subset — or none at all. Start with compound-engineering and graphify for the most impact.
 
 ### Step 1 — Install the plugin
 ```
@@ -66,7 +53,7 @@ This automatically configures:
 - The **PostToolUse hook** so graphify stays fresh after every code edit
 - **codeburn menubar** for passive background cost monitoring
 
-Restart Claude Code after setup for hooks to take effect.
+> ⚠️ **Restart Claude Code after setup for hooks to take effect.**
 
 <details>
 <summary>Manual setup (if you prefer to configure hooks yourself)</summary>
@@ -109,6 +96,46 @@ codeburn menubar
 > **Security note:** Always read hook commands before adding them. These commands make no network calls and execute no external code. See [DOCS.md](DOCS.md) for details.
 
 </details>
+
+## ✨ What Sarthi Does
+
+At the start of every session, Sarthi presents a brief welcome showing which tools are active, and lets you skip any of them for that session:
+
+```
+Sarthi ready. Here's what's active this session:
+
+  [1] compound-engineering  — build, debug, review, ship, frontend, strategy, brainstorm
+  [2] graphify              — codebase navigation via knowledge graph
+  [3] morph                 — fast bulk code edits (MCP active)
+  [4] firecrawl             — web research and scraping
+  [5] codex                 — parallel code review and investigation
+  [6] codeburn              — token spend analytics
+  [7] superpowers           — parallel agents, TDD, git worktrees
+
+Skip any tool for this session? Type e.g. "skip 3 5" — or just start working to use all.
+Skipped tools fall back to standard Claude behaviour.
+```
+
+After that, just describe what you want. Sarthi handles the rest.
+
+## 🗺️ Routing Table
+
+| Intent | With tools | Without tools |
+|--------|-----------|---------------|
+| Build feature | `/ce-plan` → `/ce-work` | Step-by-step in chat |
+| Large refactor | Morph active + `/ce-work` | Edit file by file |
+| Debug / Fix | `/ce-debug` | Systematic root cause |
+| Frontend / UI | `/ce-frontend-design` | Design-quality prompting |
+| Review / PR | `/ce-code-review` + Codex dispatch | Structured review |
+| Ship | `/ce-commit-push-pr` | git add/commit/push |
+| Codebase nav | `graphify query/path/explain` | Targeted grep |
+| Strategy | `/ce-strategy` | Strategy doc in chat |
+| Brainstorm | `/ce-brainstorm` | Structured ideation |
+| Research | `/firecrawl-search` or `/firecrawl-scrape` | WebFetch |
+| Cost check | `codeburn` | Suggest `/compact` |
+| New repo | `graphify extract .` (auto) | Read README + structure |
+| Save learnings | `/revise-claude-md` | Manual CLAUDE.md edit |
+| Parallel work | `/ce-worktree` + parallel agents | Sequenced tasks |
 
 ## 🚀 Usage
 
@@ -189,39 +216,37 @@ Just describe what you want in plain language. Sarthi detects intent and routes 
 → Routing to /revise-claude-md.
 ```
 
-## 🗺️ Routing Table
-
-| Intent | With tools | Without tools |
-|--------|-----------|---------------|
-| Build feature | `/ce-plan` → `/ce-work` | Step-by-step in chat |
-| Large refactor | Morph active + `/ce-work` | Edit file by file |
-| Debug / Fix | `/ce-debug` | Systematic root cause |
-| Frontend / UI | `/ce-frontend-design` | Design-quality prompting |
-| Review / PR | `/ce-code-review` + Codex dispatch | Structured review |
-| Ship | `/ce-commit-push-pr` | git add/commit/push |
-| Codebase nav | `graphify query/path/explain` | Targeted grep |
-| Strategy | `/ce-strategy` | Strategy doc in chat |
-| Brainstorm | `/ce-brainstorm` | Structured ideation |
-| Research | `/firecrawl-search` or `/firecrawl-scrape` | WebFetch |
-| Cost check | `codeburn optimize` | Suggest `/compact` |
-| New repo | `graphify extract .` | Read README + structure |
-| Save learnings | `/revise-claude-md` | Manual CLAUDE.md edit |
-| Parallel work | `/ce-worktree` + parallel agents | Sequenced tasks |
-
 ## 🛡️ Cost Guard
 
 Before every task, Sarthi checks five things:
 
 1. **Deliverable named?** — Asks for a one-sentence outcome if missing
-2. **Graphify available?** — Uses knowledge graph before grepping if graph exists. If graphify is installed but no graph exists for the current repo, Sarthi builds one automatically in the background using `graphify extract .` — **this uses LLM API tokens once per repo.** Subsequent graph refreshes after code edits use `graphify update .` which is free (AST only, no LLM).
-3. **Morph available?** — Surfaces Morph for bulk/refactor edits automatically
+2. **Graphify available?** — Queries the knowledge graph before any file reads or grep. On a new repo, builds the graph automatically in the background (`graphify extract .` uses LLM tokens once; all subsequent refreshes are free)
+3. **Morph available?** — Surfaces Morph automatically for bulk/refactor edits
 4. **Better for Codex?** — Offers to delegate review/investigation to save Claude tokens
 5. **Retry guard** — Stops after two failed attempts and prompts reconsideration
 
+## 📁 Best Practices Templates
+
+The [`best-practices/`](best-practices/) folder contains 9 governance templates for running Claude Code efficiently on any project:
+
+| File | Purpose |
+|------|---------|
+| `CLAUDE.md` | Drop-in AI instruction file for your repo root |
+| `CURRENT_SPRINT.md` | Scope-lock for the active sprint — prevents token waste from drift |
+| `ARCHITECTURE.md` | Non-negotiable system patterns Claude must respect |
+| `DESIGN_SYSTEM.md` | Visual standards to keep UI consistent across sessions |
+| `API_PATTERNS.md` | Backend integration conventions |
+| `IMPLEMENTATION_PATTERNS.md` | Coding style and conventions |
+| `PRODUCT_PRINCIPLES.md` | UX and product decision heuristics |
+| `AI_WORKFLOW.md` | How Claude should operate within your repo |
+| `PLACEMENT_AND_USAGE_GUIDE.md` | Where each file goes and how to use it |
+
+Copy the ones you need into your project. See `PLACEMENT_AND_USAGE_GUIDE.md` for setup instructions.
 
 ## 🏆 Tools & Full Credits
 
-Sarthi is a wrapper. The real work is done by these tools and their creators. **Please go star their repos.**
+> Sarthi is a thin routing layer — a skill file that detects your intent and points Claude at the right tool. All capability, all innovation, and all credit belong entirely to the original tool authors. **Please go star their repos.**
 
 | Tool | Purpose | Author / Org | Repo |
 |------|---------|--------------|------|
@@ -236,7 +261,7 @@ Sarthi is a wrapper. The real work is done by these tools and their creators. **
 | **skill-creator** | Generating skills from documentation URLs | [Anthropic](https://anthropic.com) | [anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official) |
 | **frontend-design** | High-quality UI with design system awareness | [Anthropic](https://anthropic.com) | [anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official) |
 
-*Sarthi works with any combination of the above — or none at all. Each tool can be installed independently.*
+*Sarthi works with any combination of the above — or none at all. Each tool is installed independently.*
 
 ## 🤔 Why "Sarthi"?
 
