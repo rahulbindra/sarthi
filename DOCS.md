@@ -132,7 +132,7 @@ If your message doesn't have a clear outcome, Sarthi asks:
 This prevents the most common source of wasted tokens: open-ended sessions without a defined endpoint.
 
 ### Check 2: Graphify first
-If `graphify-out/graph.json` exists, Sarthi always queries the knowledge graph before reading files or running grep. This alone can cut codebase-navigation token cost by 60–80%.
+If `graphify-out/graph.json` exists, Sarthi always queries the knowledge graph before reading files or running grep. This can significantly reduce the tokens spent on codebase navigation — graphify's semantic index replaces many grep-and-read cycles.
 
 ### Check 3: Codex delegation
 For investigation and review tasks, Sarthi offers to dispatch to Codex:
@@ -206,6 +206,9 @@ Currently optimised for Claude Code. The skill format may work in other Claude-b
 
 **What if Sarthi routes to the wrong tool?**
 Just say "no, do X instead" — Sarthi will re-route. Or invoke the tool directly with its slash command.
+
+**Does Sarthi collect any data?**
+No. Sarthi is a plain markdown skill file. It runs entirely inside Claude Code on your machine and makes no network calls of its own. No telemetry, no analytics, no external services. Tools you install separately (graphify, firecrawl, etc.) may make their own network calls per their own documentation.
 
 **Does Sarthi add latency?**
 The SessionStart hook adds ~100ms at session open. Per-message routing adds no latency — it's part of Claude's response, not a separate call.

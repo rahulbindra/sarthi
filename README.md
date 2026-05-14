@@ -137,6 +137,10 @@ In the Mahabharata, Lord Krishna served as Arjuna's Sarthi — not just driving 
 
 See [DOCS.md](DOCS.md) for the complete routing reference, cost guard details, FAQ, and extension guide.
 
+## 🔒 Privacy
+
+Sarthi collects no data. It is a plain markdown skill file that runs entirely on your machine inside Claude Code. No telemetry, no network calls, no external services. The only tools that make network calls are the ones you explicitly install (graphify, firecrawl, etc.) — Sarthi itself is just routing instructions.
+
 ## 🤝 Contributing
 
 PRs welcome. The routing rules are plain markdown in `skills/sarthi/SKILL.md` — easy to extend for new tools.
