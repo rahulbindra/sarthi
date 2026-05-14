@@ -30,7 +30,7 @@ Sarthi ready. Here's what's active this session:
   [4] firecrawl             — web research and scraping
   [5] codex                 — parallel code review and investigation
   [6] codeburn              — token spend analytics (run: codeburn)
-  [7] superpowers           — parallel agents, TDD, git worktrees
+  [7] superpowers           — parallel agents, TDD, systematic debugging, code review, verification
 
 Skip any tool for this session? Type e.g. "skip 3 5" — or just start working to use all.
 Skipped tools fall back to standard Claude behaviour.
@@ -85,6 +85,7 @@ Do not announce these runs. Complete them before responding to the user's first 
 | Available | Route |
 |-----------|-------|
 | compound-engineering | `/ce-plan` → `/ce-work` |
+| superpowers only | `/writing-plans` → `/executing-plans` |
 | vanilla Claude | Plan in chat → implement step by step |
 
 > If Morph is available and the task involves editing multiple files, note: *"Morph is active — large edits will be applied faster automatically."*
@@ -106,6 +107,8 @@ Do not announce these runs. Complete them before responding to the user's first 
 | Available | Route |
 |-----------|-------|
 | compound-engineering | `/ce-debug` |
+| superpowers only | `/systematic-debugging` |
+| compound-engineering + superpowers | `/ce-debug` → `/verification-before-completion` to verify fix |
 | vanilla Claude | Ask for error + context → systematic root cause analysis |
 
 ### Frontend / UI
@@ -124,8 +127,10 @@ Do not announce these runs. Complete them before responding to the user's first 
 
 | Available | Route |
 |-----------|-------|
-| compound-engineering + codex | `/ce-code-review` → offer Codex dispatch |
+| compound-engineering + codex | `/ce-code-review` → offer Codex dispatch for independent parallel review |
+| compound-engineering + superpowers | `/ce-code-review` → `/requesting-code-review` for structured review checklist |
 | compound-engineering only | `/ce-code-review` |
+| superpowers only | `/requesting-code-review` |
 | codex only | `/codex rescue` |
 | vanilla Claude | Structured review: correctness → security → style |
 
@@ -135,6 +140,7 @@ Do not announce these runs. Complete them before responding to the user's first 
 | Available | Route |
 |-----------|-------|
 | compound-engineering | `/ce-commit-push-pr` |
+| superpowers only | `/finishing-a-development-branch` |
 | vanilla Claude | Conventional commit → push |
 
 ### Codebase Navigation
@@ -175,7 +181,7 @@ Do not announce these runs. Complete them before responding to the user's first 
 
 | Available | Route |
 |-----------|-------|
-| codeburn | `codeburn optimize` |
+| codeburn | `codeburn status` |
 | vanilla Claude | Review session length, suggest `/compact` or fresh session |
 
 ### New Repo Setup
@@ -183,7 +189,7 @@ Do not announce these runs. Complete them before responding to the user's first 
 
 | Available | Route |
 |-----------|-------|
-| graphify | `graphify extract . --backend <model>` |
+| graphify | `graphify extract .` |
 | vanilla Claude | Read README + key config files + list structure |
 
 ### Save Learnings
@@ -199,7 +205,8 @@ Do not announce these runs. Complete them before responding to the user's first 
 
 | Available | Route |
 |-----------|-------|
-| compound-engineering + superpowers | `/ce-worktree` + `/dispatching-parallel-agents` |
+| compound-engineering + superpowers | `/dispatching-parallel-agents` + `/using-git-worktrees` |
+| superpowers only | `/dispatching-parallel-agents` |
 | vanilla Claude | Sequence tasks, clarify dependencies |
 
 ---
@@ -222,7 +229,7 @@ If `morph:yes` — mention it when the task involves multiple file edits:
 
 **4. Better for Codex?**
 If the task is primarily investigation or review and Codex is installed:
-> "This looks like a good Codex task — want me to dispatch it to save Claude tokens?"
+> "This looks like a good candidate for parallel Codex review — want me to dispatch it for an independent second opinion?"
 
 **5. Retry guard**
 If the same fix approach fails twice — stop:

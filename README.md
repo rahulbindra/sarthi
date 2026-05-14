@@ -81,7 +81,7 @@ This automatically configures:
       "matcher": "Write|Edit",
       "hooks": [{
         "type": "command",
-        "command": "[ -f graphify-out/graph.json ] && graphify update . > /dev/null 2>&1 || true"
+        "command": "[ -f graphify-out/graph.json ] && python3 -c \"import os,time; exit(0 if time.time()-os.path.getmtime('graphify-out/graph.json')>30 else 1)\" 2>/dev/null && graphify update . > /dev/null 2>&1 || true"
       }]
     }]
   }
@@ -132,7 +132,7 @@ After that, just describe what you want. Sarthi handles the rest.
 | Strategy | `/ce-strategy` | Strategy doc in chat |
 | Brainstorm | `/ce-brainstorm` | Structured ideation |
 | Research | `/firecrawl-search` or `/firecrawl-scrape` | WebFetch |
-| Cost check | `codeburn` | Suggest `/compact` |
+| Cost check | `codeburn status` | Suggest `/compact` |
 | New repo | `graphify extract .` (auto) | Read README + structure |
 | Save learnings | `/revise-claude-md` | Manual CLAUDE.md edit |
 | Parallel work | `/ce-worktree` + parallel agents | Sequenced tasks |
@@ -186,7 +186,7 @@ Just describe what you want in plain language. Sarthi detects intent and routes 
 **Review & shipping**
 ```
 "Review this PR before I merge"
-→ Routing to /ce-code-review. This looks like a good Codex task too — want me to dispatch for a parallel review?
+→ Routing to /ce-code-review. Want me to also dispatch to Codex for an independent parallel review?
 
 "Ship what I have"
 → Routing to /ce-commit-push-pr.

@@ -57,7 +57,7 @@ jq '.hooks.PostToolUse = (.hooks.PostToolUse // []) + [{
   "matcher": "Write|Edit",
   "hooks": [{
     "type": "command",
-    "command": "[ -f graphify-out/graph.json ] && graphify update . > /dev/null 2>&1 || true"
+    "command": "[ -f graphify-out/graph.json ] && python3 -c \"import os,time; exit(0 if time.time()-os.path.getmtime('\''graphify-out/graph.json'\'')>30 else 1)\" 2>/dev/null && graphify update . > /dev/null 2>&1 || true"
   }]
 }]' ~/.claude/settings.json > /tmp/sarthi-settings-tmp.json && mv /tmp/sarthi-settings-tmp.json ~/.claude/settings.json
 ```

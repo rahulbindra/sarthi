@@ -119,7 +119,7 @@ Sarthi recognises these intents:
 |------|--------|--------|
 | codex | Review (expensive) | `/codex rescue` |
 | firecrawl | Research | `/firecrawl-search` or `/firecrawl-scrape` |
-| codeburn | Cost | `codeburn` or `codeburn optimize` |
+| codeburn | Cost | `codeburn status` |
 | claude-md-management | Learnings | `/revise-claude-md` |
 
 ---
