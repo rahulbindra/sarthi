@@ -1,31 +1,32 @@
 {
-  "name": "optimizer-plugin",
+  "name": "sarthi",
   "owner": {
     "name": "Rahul Bindra",
     "url": "https://github.com/rahulbindra"
   },
   "metadata": {
-    "description": "Optimizer — an intent-routing layer for Claude Code that detects what you're trying to do and routes you to the right tool automatically.",
+    "description": "Sarthi — your AI charioteer for Claude Code. Detects intent and routes to the right tool automatically.",
     "version": "1.0.0"
   },
   "plugins": [
     {
-      "name": "optimizer",
-      "description": "Detects your intent and routes to the right Claude Code tool automatically — graphify, compound-engineering, codex, firecrawl, and more. Also enforces a cost-guard pattern to prevent expensive runaway sessions.",
+      "name": "sarthi",
+      "description": "Sarthi (Sanskrit: charioteer/guide) detects what you're trying to do and routes to the right Claude Code tool automatically — graphify, compound-engineering, codex, firecrawl, and more. Falls back gracefully to vanilla Claude when tools aren't installed. Includes a universal cost-guard to prevent runaway sessions.",
       "author": {
         "name": "Rahul Bindra",
         "url": "https://github.com/rahulbindra"
       },
-      "homepage": "https://github.com/rahulbindra/optimizer-plugin",
+      "homepage": "https://github.com/rahulbindra/sarthi",
       "tags": [
         "routing",
-        "optimizer",
-        "cost",
+        "orchestration",
+        "cost-optimization",
         "workflow",
         "automation",
         "graphify",
         "compound-engineering",
-        "productivity"
+        "productivity",
+        "intent-detection"
       ],
       "source": "./"
     }
