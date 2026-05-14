@@ -94,7 +94,7 @@ Add this PostToolUse hook to auto-update the graphify graph after every code edi
 }
 ```
 
-### Step 5 — Passive cost monitoring (optional)
+### Step 4 — Passive cost monitoring (optional)
 
 Instead of running `codeburn` manually, install the macOS menubar app once and it monitors your spend continuously in the background:
 ```
