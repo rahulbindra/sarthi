@@ -117,7 +117,7 @@ Sarthi routes to these tools when installed. Full credit to each team:
 | [superpowers](https://github.com/anthropics/claude-plugins-official) | Parallel agents, TDD, git worktrees, verification | [Jesse Vincent](https://github.com/jesse-c) @ Anthropic |
 | [codex](https://github.com/openai/codex-plugin-cc) | Parallel review and investigation (saves Claude tokens) | [OpenAI](https://openai.com) |
 | [firecrawl](https://github.com/mendableai/firecrawl) | Web research, scraping, search | [Mendable / Firecrawl](https://firecrawl.dev) |
-| [codeburn](https://github.com/nichochar/codeburn) | Token spend analytics, cost optimization | [Nicholas Charriere](https://github.com/nichochar) |
+| [codeburn](https://github.com/getagentseal/codeburn) | Token spend analytics, cost optimization | [AgentSeal](https://github.com/getagentseal) |
 | [morph](https://morphllm.com) | Fast bulk code application via MCP | [MorphLLM](https://github.com/morphllm) |
 | [claude-md-management](https://github.com/anthropics/claude-plugins-official) | Saving session learnings to CLAUDE.md | Anthropic |
 | [skill-creator](https://github.com/anthropics/claude-plugins-official) | Generating skills from documentation URLs | Anthropic |
