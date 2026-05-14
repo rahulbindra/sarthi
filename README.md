@@ -109,7 +109,7 @@ Sarthi ready. Here's what's active this session:
   [3] morph                 — fast bulk code edits (MCP active)
   [4] firecrawl             — web research and scraping
   [5] codex                 — parallel code review and investigation
-  [6] codeburn              — token spend analytics
+  [6] codeburn              — token spend analytics (audit due every 3 days)
   [7] superpowers           — parallel agents, TDD, git worktrees
 
 Skip any tool for this session? Type e.g. "skip 3 5" — or just start working to use all.
@@ -223,8 +223,21 @@ Before every task, Sarthi checks five things:
 1. **Deliverable named?** — Asks for a one-sentence outcome if missing
 2. **Graphify available?** — Queries the knowledge graph before any file reads or grep. On a new repo, builds the graph automatically in the background (`graphify extract .` uses LLM tokens once; all subsequent refreshes are free)
 3. **Morph available?** — Surfaces Morph automatically for bulk/refactor edits
-4. **Better for Codex?** — Offers to delegate review/investigation to save Claude tokens
+4. **Better for Codex?** — Offers an independent parallel review rather than doing it inline
 5. **Retry guard** — Stops after two failed attempts and prompts reconsideration
+
+## 📊 Automated Codeburn Audit
+
+Sarthi tracks when you last reviewed your token spend. Every session start, it checks whether a codeburn audit is due:
+
+- If codeburn hasn't been run in **3+ days**, the onboarding prompt shows:
+  ```
+  ⚠️  Codeburn audit due — last review was 3+ days ago. Type "codeburn audit" to run it now.
+  ```
+- Running the audit surfaces usage patterns and improvement areas for the last 3 days
+- The 3-day clock resets automatically after each audit
+
+You can ignore the nudge and start working — it won't interrupt your session. The timestamp is stored locally in `~/.claude/.sarthi-codeburn-ts`.
 
 ## 📁 Best Practices Templates
 
