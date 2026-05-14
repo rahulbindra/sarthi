@@ -16,6 +16,10 @@
 
 ---
 
+> **Sarthi does not build any of these tools. It is a thin routing layer — a skill file that detects your intent and points Claude at the right tool. All capability, all innovation, and all credit belong entirely to the original tool authors listed below. Please star and support their repos directly.**
+
+---
+
 Sarthi is a Claude Code plugin that acts as an **intelligent routing layer** for your AI development stack. Instead of remembering which tool to use when, Sarthi detects your intent from natural language and routes you to the right tool automatically — or falls back gracefully to vanilla Claude if you don't have it installed.
 
 ## ✨ What Sarthi Does
@@ -106,24 +110,24 @@ Add to `~/.claude/settings.json` to activate Sarthi at the start of every sessio
 }
 ```
 
-## 🧰 Compatible Tools & Credits
+## 🏆 Tools & Full Credits
 
-Sarthi routes to these tools when installed. Full credit to each team:
+Sarthi is a wrapper. The real work is done by these tools and their creators. **Please go star their repos.**
 
-| Tool | What Sarthi uses it for | Credit |
-|------|------------------------|--------|
-| [compound-engineering](https://github.com/EveryInc/compound-engineering-plugin) | Build, debug, review, ship, frontend, strategy, brainstorm | [Kieran Klaassen](https://github.com/kieranklaassen) @ [Every.to](https://every.to) |
-| [graphify](https://github.com/safishamsi/graphify) | Codebase navigation, knowledge graph queries | [Safi Shamsi](https://github.com/safishamsi) |
-| [superpowers](https://github.com/anthropics/claude-plugins-official) | Parallel agents, TDD, git worktrees, verification | [Jesse Vincent](https://github.com/jesse-c) @ Anthropic |
-| [codex](https://github.com/openai/codex-plugin-cc) | Parallel review and investigation (saves Claude tokens) | [OpenAI](https://openai.com) |
-| [firecrawl](https://github.com/mendableai/firecrawl) | Web research, scraping, search | [Mendable / Firecrawl](https://firecrawl.dev) |
-| [codeburn](https://github.com/getagentseal/codeburn) | Token spend analytics, cost optimization | [AgentSeal](https://github.com/getagentseal) |
-| [morph](https://morphllm.com) | Fast bulk code application via MCP | [MorphLLM](https://github.com/morphllm) |
-| [claude-md-management](https://github.com/anthropics/claude-plugins-official) | Saving session learnings to CLAUDE.md | Anthropic |
-| [skill-creator](https://github.com/anthropics/claude-plugins-official) | Generating skills from documentation URLs | Anthropic |
-| [frontend-design](https://github.com/anthropics/claude-plugins-official) | High-quality UI building with design system awareness | Anthropic |
+| Tool | Purpose | Author / Org | Repo |
+|------|---------|--------------|------|
+| **compound-engineering** | Build, debug, review, ship, frontend, strategy, brainstorm | [Kieran Klaassen](https://github.com/kieranklaassen) @ [Every Inc](https://every.to) | [EveryInc/compound-engineering-plugin](https://github.com/EveryInc/compound-engineering-plugin) |
+| **graphify** | Codebase knowledge graph, semantic navigation | [Safi Shamsi](https://github.com/safishamsi) | [safishamsi/graphify](https://github.com/safishamsi/graphify) |
+| **superpowers** | Parallel agents, TDD, git worktrees, verification patterns | [Jesse Vincent](https://github.com/obra) @ [Prime Radiant](https://primeradiant.com) | [obra/superpowers](https://github.com/obra/superpowers) |
+| **codex** | Parallel code review and investigation | [OpenAI](https://openai.com) | [openai/codex-plugin-cc](https://github.com/openai/codex-plugin-cc) |
+| **firecrawl** | Web research, scraping, search | [Firecrawl](https://firecrawl.dev) | [mendableai/firecrawl](https://github.com/mendableai/firecrawl) |
+| **codeburn** | Token spend analytics, cost optimization | [AgentSeal](https://github.com/getagentseal) | [getagentseal/codeburn](https://github.com/getagentseal/codeburn) |
+| **morph** | Fast bulk code application via MCP | [MorphLLM](https://morphllm.com) | [morphllm/morph-claude-code-plugin](https://github.com/morphllm/morph-claude-code-plugin) |
+| **claude-md-management** | Saving session learnings to CLAUDE.md | [Anthropic](https://anthropic.com) | [anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official) |
+| **skill-creator** | Generating skills from documentation URLs | [Anthropic](https://anthropic.com) | [anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official) |
+| **frontend-design** | High-quality UI with design system awareness | [Anthropic](https://anthropic.com) | [anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official) |
 
-*Sarthi works with any combination of the above — or none at all.*
+*Sarthi works with any combination of the above — or none at all. Each tool can be installed independently.*
 
 ## 🤔 Why "Sarthi"?
 
