@@ -56,10 +56,22 @@ After that, Sarthi:
 /reload-plugins
 ```
 
-### Step 2 — Add the SessionStart hook (required for automatic activation)
+### Step 2 — Run setup (one command does everything)
+```
+/sarthi-setup
+```
 
-Add this to `~/.claude/settings.json` so Sarthi activates automatically at the start of every session without you having to type anything:
+This automatically configures:
+- The **SessionStart hook** so Sarthi activates at the start of every session
+- The **PostToolUse hook** so graphify stays fresh after every code edit
+- **codeburn menubar** for passive background cost monitoring
 
+Restart Claude Code after setup for hooks to take effect.
+
+<details>
+<summary>Manual setup (if you prefer to configure hooks yourself)</summary>
+
+**SessionStart hook** — add to `~/.claude/settings.json`:
 ```json
 {
   "hooks": {
@@ -74,12 +86,7 @@ Add this to `~/.claude/settings.json` so Sarthi activates automatically at the s
 }
 ```
 
-> **Security note:** Always read hook commands before adding them. This command constructs a static JSON string in Python — no network calls, no external code. See [DOCS.md](DOCS.md) for details.
-
-### Step 3 — Keep the graphify graph fresh automatically (optional)
-
-Add this PostToolUse hook to auto-update the graphify graph after every code edit:
-
+**PostToolUse hook** — keeps graphify graph fresh after edits:
 ```json
 {
   "hooks": {
@@ -94,12 +101,14 @@ Add this PostToolUse hook to auto-update the graphify graph after every code edi
 }
 ```
 
-### Step 4 — Passive cost monitoring (optional)
-
-Instead of running `codeburn` manually, install the macOS menubar app once and it monitors your spend continuously in the background:
+**codeburn menubar** — passive cost monitoring:
 ```
 codeburn menubar
 ```
+
+> **Security note:** Always read hook commands before adding them. These commands make no network calls and execute no external code. See [DOCS.md](DOCS.md) for details.
+
+</details>
 
 ## 🚀 Usage
 
