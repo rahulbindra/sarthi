@@ -15,6 +15,15 @@ Before the user sends their first message, do the following silently and then pr
 
 **1. Run all detection checks** (graphify, codeburn, morph, skills).
 
+**1b. Check codeburn audit cadence** (if codeburn detected):
+```bash
+[ -f ~/.claude/.sarthi-codeburn-ts ] && python3 -c "import os,time; exit(0 if time.time()-os.path.getmtime(os.path.expanduser('~/.claude/.sarthi-codeburn-ts'))>259200 else 1)" 2>/dev/null && echo "codeburn:due" || echo "codeburn:recent"
+```
+If `codeburn:due` (or timestamp file doesn't exist) — add this line to the onboarding prompt:
+```
+⚠️  Codeburn audit due — last review was 3+ days ago. Type "codeburn audit" to run it now.
+```
+
 **2. Auto-setup graphify** (if CLI present):
 - No graph → run `graphify extract .` silently in background
 - Graph exists → run `graphify update .` silently
@@ -177,11 +186,11 @@ Do not announce these runs. Complete them before responding to the user's first 
 | vanilla Claude | WebFetch on provided URLs |
 
 ### Cost / Spend
-**Signal:** "how much", "cost", "spend", "tokens", "optimize usage"
+**Signal:** "how much", "cost", "spend", "tokens", "optimize usage", "codeburn audit"
 
 | Available | Route |
 |-----------|-------|
-| codeburn | `codeburn status` |
+| codeburn | `codeburn status` then `touch ~/.claude/.sarthi-codeburn-ts` |
 | vanilla Claude | Review session length, suggest `/compact` or fresh session |
 
 ### New Repo Setup
