@@ -112,8 +112,9 @@ codeburn menubar
 
 ## 🚀 Usage
 
-Just describe what you want in plain language:
+Just describe what you want in plain language. Sarthi detects intent and routes — no slash commands needed.
 
+**Building & debugging**
 ```
 "The login screen is crashing on iOS"
 → Routing to /ce-debug.
@@ -121,17 +122,71 @@ Just describe what you want in plain language:
 "Add push notifications to the home screen"
 → Routing to /ce-plan to scope this, then /ce-work.
 
+"The payment flow is broken after the last merge"
+→ Routing to /ce-debug. What's the error or stack trace?
+```
+
+**Refactoring & bulk edits**
+```
 "Refactor all API calls to use the new client"
 → Morph is active — bulk edits will be applied faster. Routing to /ce-work.
 
+"Rename UserProfile to AccountProfile across the whole codebase"
+→ Morph is active. Routing to /ce-work to apply this rename.
+```
+
+**Codebase navigation**
+```
 "How does the auth flow connect to the session manager?"
 → Using graphify. [runs: graphify query "auth flow session manager"]
+
+"Where is the push notification logic?"
+→ [runs: graphify query "push notification logic"] — found in src/services/notifications.ts.
+
+"What calls the checkout function?"
+→ [runs: graphify path "checkout" "<callers>"]
+```
+
+**Frontend & UI**
+```
+"Redesign the home screen to feel more like Linear"
+→ Routing to /ce-frontend-design.
+
+"The settings screen layout is broken on smaller phones"
+→ Routing to /ce-frontend-design with the layout fix as scope.
+```
+
+**Review & shipping**
+```
+"Review this PR before I merge"
+→ Routing to /ce-code-review. This looks like a good Codex task too — want me to dispatch for a parallel review?
 
 "Ship what I have"
 → Routing to /ce-commit-push-pr.
 
+"Open a PR with a proper description"
+→ Routing to /ce-commit-push-pr.
+```
+
+**Research & strategy**
+```
+"Look up the Stripe webhooks documentation"
+→ Routing to /firecrawl-scrape.
+
+"What should we build next quarter?"
+→ Routing to /ce-strategy.
+
+"Brainstorm ways to improve onboarding retention"
+→ Routing to /ce-brainstorm.
+```
+
+**Cost & session hygiene**
+```
 "How much have I spent this week?"
 → [runs: codeburn]
+
+"Save this approach to CLAUDE.md"
+→ Routing to /revise-claude-md.
 ```
 
 ## 🗺️ Routing Table
