@@ -110,6 +110,8 @@ Add to `~/.claude/settings.json` to activate Sarthi at the start of every sessio
 }
 ```
 
+> **Security note:** Hooks run automatically and can inject context into every Claude session. Always read and understand any hook command before adding it to `settings.json`. Never copy-paste hooks from sources you don't trust. The command above only constructs a static JSON string in Python — it makes no network calls and executes no external code.
+
 ## 🏆 Tools & Full Credits
 
 Sarthi is a wrapper. The real work is done by these tools and their creators. **Please go star their repos.**

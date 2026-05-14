@@ -57,6 +57,9 @@ At the start of each session, Sarthi silently checks which tools are available:
 - Looks for CLI binaries (`graphify`, `codeburn`)
 - Checks for knowledge graph files (`graphify-out/graph.json`)
 - Scans available skills for compound-engineering, firecrawl, codex, claude-md-management
+- Reads `~/.claude.json` to detect whether the Morph MCP server is configured
+
+> **Transparency note:** Sarthi reads `~/.claude.json` solely to check if `mcpServers["morph-mcp"]` exists. It does not transmit, log, or store any data from this file. The check is a local read-only shell command that runs on your machine.
 
 ### Stage 2: Intent Matching
 Sarthi reads your message and matches it to one of 13 intent categories using signal words and patterns. It never routes to a tool that isn't installed.
@@ -167,6 +170,22 @@ By default, Sarthi is invoked manually with `/sarthi`. To activate it automatica
 ```
 
 This makes Sarthi active for all sessions across all repos.
+
+> **Security warning:** Hooks run automatically at session start and can inject context into every Claude session. Always review any hook command before adding it to `settings.json` — including this one. Never copy-paste hooks from sources you don't trust. The command above only constructs a JSON string in Python and passes a hardcoded instruction string to Claude; it makes no network calls and executes no external code.
+
+---
+
+## Third-Party Tools — Trust & Security
+
+Sarthi routes to tools built and maintained by independent teams (graphify, compound-engineering, firecrawl, morph, etc.). When you follow Sarthi's install instructions and run commands like `npx @morphllm/morphmcp` or `pip install graphifyy`, you are executing third-party code on your machine.
+
+Sarthi has no control over those tools. Before installing any tool Sarthi routes to:
+
+- Review the tool's GitHub repository and recent commit history
+- Check that the package name on npm/pip matches the official repo exactly (typosquatting is a real risk)
+- Verify the tool is actively maintained and from a trusted author
+
+The tools listed in this repo's [README credits](../README.md) were verified at time of writing. Package ownership can change — always verify before installing.
 
 ---
 
