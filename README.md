@@ -58,15 +58,7 @@ Add this to `~/.claude/settings.json` so Sarthi activates automatically at the s
 
 > **Security note:** Always read hook commands before adding them. This command constructs a static JSON string in Python — no network calls, no external code. See [DOCS.md](DOCS.md) for details.
 
-### Step 3 — Per-repo: build the graphify knowledge graph (one-time, optional)
-
-If you have graphify installed, run this once in each repo you work in:
-```
-graphify extract .
-```
-Sarthi will detect the graph automatically from then on and query it before any file reads or grep. If the graph is missing, Sarthi will prompt you to build it at the start of the session.
-
-### Step 4 — Keep the graph fresh automatically (optional)
+### Step 3 — Keep the graphify graph fresh automatically (optional)
 
 Add this PostToolUse hook to auto-update the graphify graph after every code edit:
 
@@ -139,7 +131,7 @@ Just describe what you want in plain language:
 Before every task, Sarthi checks five things:
 
 1. **Deliverable named?** — Asks for a one-sentence outcome if missing
-2. **Graphify available?** — Uses knowledge graph before grepping if graph exists
+2. **Graphify available?** — Uses knowledge graph before grepping if graph exists. If graphify is installed but no graph exists for the current repo, Sarthi builds one automatically in the background using `graphify extract .` — **this uses LLM API tokens once per repo.** Subsequent graph refreshes after code edits use `graphify update .` which is free (AST only, no LLM).
 3. **Morph available?** — Surfaces Morph for bulk/refactor edits automatically
 4. **Better for Codex?** — Offers to delegate review/investigation to save Claude tokens
 5. **Retry guard** — Stops after two failed attempts and prompts reconsideration
