@@ -175,17 +175,38 @@ This makes Sarthi active for all sessions across all repos.
 
 ---
 
-## Third-Party Tools — Trust & Security
+## Third-Party Tools — Trust, Security & Licensing
 
-Sarthi routes to tools built and maintained by independent teams (graphify, compound-engineering, firecrawl, morph, etc.). When you follow Sarthi's install instructions and run commands like `npx @morphllm/morphmcp` or `pip install graphifyy`, you are executing third-party code on your machine.
+Sarthi routes to tools built and maintained by independent teams. It does not bundle, redistribute, or include any third-party tool code. Each tool you install is a separate installation subject to its own license and terms.
 
-Sarthi has no control over those tools. Before installing any tool Sarthi routes to:
+### Security
+
+When you follow Sarthi's install instructions and run commands like `npx @morphllm/morphmcp` or `pip install graphifyy`, you are executing third-party code on your machine. Before installing any tool Sarthi routes to:
 
 - Review the tool's GitHub repository and recent commit history
 - Check that the package name on npm/pip matches the official repo exactly (typosquatting is a real risk)
 - Verify the tool is actively maintained and from a trusted author
 
 The tools listed in this repo's [README credits](../README.md) were verified at time of writing. Package ownership can change — always verify before installing.
+
+### Licensing
+
+Sarthi itself is MIT licensed. A summary of the licenses of tools it routes to, verified at time of writing:
+
+| Tool | License | Notes |
+|------|---------|-------|
+| compound-engineering | MIT | No restrictions |
+| graphify | MIT | No restrictions |
+| superpowers | MIT | No restrictions |
+| codeburn | MIT | No restrictions |
+| codex (OpenAI) | Apache 2.0 | Includes patent grant; check NOTICE file if redistributing |
+| claude-md-management | Apache 2.0 | Anthropic — check NOTICE file if redistributing |
+| skill-creator | Apache 2.0 | Anthropic — check NOTICE file if redistributing |
+| frontend-design | Apache 2.0 | Anthropic — check NOTICE file if redistributing |
+| firecrawl | AGPL-3.0 (core) / MIT (SDK) | **If you self-host the Firecrawl server**, AGPL-3.0 applies and requires you to publish any modified source. Using the hosted API at firecrawl.dev via the SDK is MIT-licensed and has no such obligation. |
+| morph | **No license declared** | The `morph-claude-code-plugin` repo has no LICENSE file. Under copyright law, this means all rights are reserved by Morph LLC by default. Sarthi does not redistribute Morph's code — it only surfaces it as a user-installable option. Review [Morph's Terms of Service](https://morphllm.com) and obtain clarification from Morph before any commercial or redistributive use. |
+
+> Licenses change. Always verify against the tool's current repository before making decisions based on this table.
 
 ---
 
