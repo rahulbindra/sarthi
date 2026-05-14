@@ -31,6 +31,14 @@ Build a mental map of what's available. **Only route to tools that exist.**
 
 > **Morph note:** If `morph:yes`, Morph runs automatically as an MCP server when applying code edits — no explicit invocation needed. Surface it proactively when a task involves large-scale or bulk file edits.
 
+### Auto-setup: graphify graph missing
+
+If `graphify:cli` is detected but `graphify:graph` is missing (no `graphify-out/graph.json` in the current repo), proactively tell the user:
+
+> "No graphify knowledge graph found for this repo. Running `graphify extract .` will build one and make codebase navigation significantly faster — it uses LLM tokens once, then all future queries are free. Want me to run it now?"
+
+If they say yes, run `graphify extract .`. Do not run it silently without asking — it costs API tokens.
+
 ---
 
 ## Step 2: Route by Intent

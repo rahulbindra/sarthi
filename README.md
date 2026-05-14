@@ -31,13 +31,65 @@ Sarthi is a Claude Code plugin that acts as an **intelligent routing layer** for
 
 ## 📦 Install
 
+### Step 1 — Install the plugin
 ```
 /plugin marketplace add https://github.com/rahulbindra/sarthi
 /plugin install sarthi
 /reload-plugins
 ```
 
-Then invoke with `/sarthi`, or see [Auto-activation](#-auto-activation) to have it load every session automatically.
+### Step 2 — Add the SessionStart hook (required for automatic activation)
+
+Add this to `~/.claude/settings.json` so Sarthi activates automatically at the start of every session without you having to type anything:
+
+```json
+{
+  "hooks": {
+    "SessionStart": [{
+      "hooks": [{
+        "type": "command",
+        "statusMessage": "Sarthi loading...",
+        "command": "python3 -c \"import json; print(json.dumps({'hookSpecificOutput': {'hookEventName': 'SessionStart', 'additionalContext': 'Act as Sarthi: read ~/.claude/skills/sarthi/SKILL.md and apply its routing rules to every user message this session.'}}))\" "
+      }]
+    }]
+  }
+}
+```
+
+> **Security note:** Always read hook commands before adding them. This command constructs a static JSON string in Python — no network calls, no external code. See [DOCS.md](DOCS.md) for details.
+
+### Step 3 — Per-repo: build the graphify knowledge graph (one-time, optional)
+
+If you have graphify installed, run this once in each repo you work in:
+```
+graphify extract .
+```
+Sarthi will detect the graph automatically from then on and query it before any file reads or grep. If the graph is missing, Sarthi will prompt you to build it at the start of the session.
+
+### Step 4 — Keep the graph fresh automatically (optional)
+
+Add this PostToolUse hook to auto-update the graphify graph after every code edit:
+
+```json
+{
+  "hooks": {
+    "PostToolUse": [{
+      "matcher": "Write|Edit",
+      "hooks": [{
+        "type": "command",
+        "command": "[ -f graphify-out/graph.json ] && graphify update . > /dev/null 2>&1 || true"
+      }]
+    }]
+  }
+}
+```
+
+### Step 5 — Passive cost monitoring (optional)
+
+Instead of running `codeburn` manually, install the macOS menubar app once and it monitors your spend continuously in the background:
+```
+codeburn menubar
+```
 
 ## 🚀 Usage
 
@@ -92,25 +144,6 @@ Before every task, Sarthi checks five things:
 4. **Better for Codex?** — Offers to delegate review/investigation to save Claude tokens
 5. **Retry guard** — Stops after two failed attempts and prompts reconsideration
 
-## ⚡ Auto-activation
-
-Add to `~/.claude/settings.json` to activate Sarthi at the start of every session across all repos:
-
-```json
-{
-  "hooks": {
-    "SessionStart": [{
-      "hooks": [{
-        "type": "command",
-        "statusMessage": "Sarthi loading...",
-        "command": "python3 -c \"import json; print(json.dumps({'hookSpecificOutput': {'hookEventName': 'SessionStart', 'additionalContext': 'Act as Sarthi: read ~/.claude/skills/sarthi/SKILL.md and apply its routing rules to every user message this session.'}}))\" "
-      }]
-    }]
-  }
-}
-```
-
-> **Security note:** Hooks run automatically and can inject context into every Claude session. Always read and understand any hook command before adding it to `settings.json`. Never copy-paste hooks from sources you don't trust. The command above only constructs a static JSON string in Python — it makes no network calls and executes no external code.
 
 ## 🏆 Tools & Full Credits
 
