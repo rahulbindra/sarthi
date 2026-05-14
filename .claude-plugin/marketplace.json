@@ -1,0 +1,33 @@
+{
+  "name": "optimizer-plugin",
+  "owner": {
+    "name": "Rahul Bindra",
+    "url": "https://github.com/rahulbindra"
+  },
+  "metadata": {
+    "description": "Optimizer — an intent-routing layer for Claude Code that detects what you're trying to do and routes you to the right tool automatically.",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "optimizer",
+      "description": "Detects your intent and routes to the right Claude Code tool automatically — graphify, compound-engineering, codex, firecrawl, and more. Also enforces a cost-guard pattern to prevent expensive runaway sessions.",
+      "author": {
+        "name": "Rahul Bindra",
+        "url": "https://github.com/rahulbindra"
+      },
+      "homepage": "https://github.com/rahulbindra/optimizer-plugin",
+      "tags": [
+        "routing",
+        "optimizer",
+        "cost",
+        "workflow",
+        "automation",
+        "graphify",
+        "compound-engineering",
+        "productivity"
+      ],
+      "source": "./"
+    }
+  ]
+}

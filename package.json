@@ -1,0 +1,9 @@
+{
+  "name": "optimizer-plugin",
+  "version": "1.0.0",
+  "description": "Intent router for Claude Code — detects what you're trying to do and routes to the right tool automatically",
+  "keywords": ["claude-code", "plugin", "optimizer", "routing", "ai", "productivity"],
+  "author": "Rahul Bindra",
+  "license": "MIT",
+  "homepage": "https://github.com/rahulbindra/optimizer-plugin"
+}
