@@ -14,6 +14,7 @@ Run this skill once after installing Sarthi. It configures everything automatica
 3. Installs codeburn menubar (if codeburn is installed)
 4. Optionally sets `ANTHROPIC_API_KEY` in your shell profile (needed for graphify; skippable)
 5. Optionally configures the Morph MCP server in `~/.claude.json` (enables fast bulk edits; skippable)
+6. Optionally enables the prompt optimizer (opt-in; suggests token-efficient rewording before routing)
 
 ## Steps
 
@@ -140,6 +141,39 @@ If the user chooses **s**:
 - Show: "Skipped. Get a Morph API key at morphllm.com and re-run /sarthi-setup to add it."
 - Continue to next step.
 
+### Step 6 — Enable prompt optimizer (opt-in)
+
+Check if already enabled:
+```bash
+[ -f ~/.claude/.sarthi-prompt-optimizer-enabled ] && echo "enabled" || echo "disabled"
+```
+
+If already enabled, skip this step silently.
+
+If NOT enabled, ask the user:
+
+```
+Prompt optimizer — before routing each task, Sarthi can assess your prompt for
+token-inefficiency signals (vague asks, missing deliverables, scope creep, etc.)
+and suggest a tighter reword. It learns from whether you accept or reject suggestions.
+
+Off by default. Enable it?
+  [y] Yes — enable prompt optimizer
+  [s] Skip — keep it off (you can enable later with /sarthi-prompt-optimizer)
+
+Your choice (y/s):
+```
+
+If the user chooses **y**:
+```bash
+touch ~/.claude/.sarthi-prompt-optimizer-enabled
+```
+- Confirm: "Prompt optimizer enabled. It will suggest rewording when it detects 2+ inefficiency signals. Rejects twice in a row → silent for the session."
+
+If the user chooses **s**:
+- Show: "Skipped. Enable any time by running `/sarthi-prompt-optimizer` and choosing 'enable'."
+- Continue to next step.
+
 ### Step 7 — Install codeburn menubar
 
 If codeburn is installed and menubar is not already running:
@@ -158,6 +192,7 @@ Sarthi setup complete.
 ✓ PostToolUse hook      — added to ~/.claude/settings.json
 ✓ ANTHROPIC_API_KEY     — added to ~/.zprofile
 ✓ Morph MCP             — configured in ~/.claude.json
+✓ Prompt optimizer      — enabled
 ✓ codeburn menubar      — launched
 
 Restart Claude Code (or open a new session) for the hooks to take effect.
@@ -169,6 +204,8 @@ If the user skipped the API key step, show `— skipped (set manually later)`.
 If ANTHROPIC_API_KEY was already in their profile, show `— already configured`.
 If the user skipped Morph, show `— skipped (morphllm.com to set up later)`.
 If Morph was already configured, show `— already configured`.
+If the user skipped prompt optimizer, show `— skipped (run /sarthi-prompt-optimizer to enable later)`.
+If prompt optimizer was already enabled, show `— already enabled`.
 
 ### Important
 

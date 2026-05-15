@@ -95,6 +95,20 @@ Do not announce these runs. Complete them before responding to the user's first 
 
 ---
 
+## Step 1b: Prompt Optimizer (if enabled)
+
+Before routing, check if the prompt optimizer is active:
+
+```bash
+[ -f ~/.claude/.sarthi-prompt-optimizer-enabled ] && echo "enabled" || echo "disabled"
+```
+
+If enabled — invoke the `sarthi-prompt-optimizer` skill to assess the user's prompt. It will either suggest a reword and wait for a response, or pass through silently. Routing continues after the optimizer completes (with the original or accepted reword).
+
+If disabled — skip entirely and proceed to routing.
+
+---
+
 ## Step 2: Route by Intent
 
 ### Build / Implement

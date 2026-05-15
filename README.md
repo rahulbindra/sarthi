@@ -243,6 +243,54 @@ Before every task, Sarthi checks five things:
 4. **Better for Codex?** — Offers an independent parallel review rather than doing it inline
 5. **Retry guard** — Stops after two failed attempts and prompts reconsideration
 
+## ✏️ Prompt Optimizer (opt-in)
+
+Before routing any task, Sarthi can assess your prompt for token-inefficiency signals and suggest a tighter reword — reducing clarifying round trips and wasted work.
+
+**Off by default.** Enable during `/sarthi-setup` or any time with `/sarthi-prompt-optimizer`.
+
+### Inefficiency signals it detects
+
+| Signal | Example |
+|--------|---------|
+| Vague verb | "fix this", "make it better" |
+| Missing deliverable | "look at the auth flow" |
+| Multi-concern | "fix X and also update Y and check Z" |
+| Repeated context | Re-explains stack or bug already discussed this session |
+| Scope creep | "while you're at it", "and anything else you notice" |
+| Ambiguous referent | "fix it", "update this" without a clear subject |
+| Over-long | 200+ word prompt with a buried one-line ask |
+
+A suggestion only appears when **2 or more** signals are present — never for a single signal alone.
+
+### How it looks
+
+```
+💡 Token suggestion — your prompt may cause extra round trips:
+
+Original:  "fix the login thing and also make signup better"
+Suggested: "Fix the JWT expiry bug on /login. Separately: improve signup form validation feedback."
+
+Why: splits two unrelated tasks, adds specific deliverables
+
+[y] Use suggested  [s] Skip  [r] Skip — tell me why (one line)
+```
+
+### How it learns
+
+Every accept or reject is saved to `~/.claude/.sarthi-prompt-learnings.json`. Over time, Sarthi stops suggesting patterns you consistently reject and prioritises patterns you consistently accept. A short optional reason on rejection accelerates this.
+
+**Session suppression:** if you reject 2 suggestions in a row, the optimizer goes quiet for the rest of that session automatically.
+
+### Commands
+
+| Command | What it does |
+|---------|-------------|
+| `/sarthi-prompt-optimizer status` | Shows accept/reject stats and strongest/weakest patterns |
+| `/sarthi-prompt-optimizer reset` | Re-enables suggestions after session suppression |
+| `/sarthi-prompt-optimizer off` | Disables optimizer entirely |
+| `/sarthi-prompt-optimizer clear` | Clears learnings and starts fresh |
+
 ## 📊 Automated Codeburn Audit
 
 Sarthi tracks when you last reviewed your token spend. Every session start, it checks whether a codeburn audit is due:
