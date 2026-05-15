@@ -103,6 +103,15 @@ codeburn menubar
 
 </details>
 
+## 🔄 Updating
+
+```
+/plugin install sarthi
+/reload-plugins
+```
+
+This pulls the latest skill files from GitHub. Your hooks (`~/.claude/settings.json`) and Morph MCP config (`~/.claude.json`) are untouched — no need to re-run `/sarthi-setup`.
+
 ## ✨ What Sarthi Does
 
 At the start of every session, Sarthi presents a brief welcome showing which tools are active, and lets you skip any of them for that session:
