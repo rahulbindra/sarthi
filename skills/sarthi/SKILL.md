@@ -83,7 +83,7 @@ Also check the skills list for: `ce-work` (compound-engineering), `firecrawl-sea
 
 Build a mental map of what's available. **Only route to tools that exist.**
 
-> **Morph note:** If `morph:yes`, Morph runs automatically as an MCP server when applying code edits — no explicit invocation needed. Surface it proactively when a task involves large-scale or bulk file edits.
+> **Morph note:** If `morph:yes`, the Morph MCP server is available but edits do NOT route through it automatically. Claude must explicitly call `mcp__morph-mcp__edit_file` instead of the native `Edit` tool. Surface Morph proactively when a task touches 3 or more files and instruct: use `mcp__morph-mcp__edit_file` for every edit in that task.
 
 ### Auto-setup: graphify graph missing or stale
 
@@ -286,8 +286,10 @@ Skip this check for: informational questions ("how does X work", "where is X", "
 If `graphify-out/graph.json` exists — always `graphify query` before reading or grepping. Never grep first.
 
 **3. Morph available?**
-If `morph:yes` — mention it when the task involves multiple file edits:
-> "Morph is active — bulk edits will be applied faster automatically."
+If `morph:yes` and the task touches 3 or more files — announce it and switch tools:
+> "Morph is active — using `mcp__morph-mcp__edit_file` for all edits in this task."
+
+Then use `mcp__morph-mcp__edit_file` instead of the native `Edit` tool for every file change in this task. Do not mix Edit and Morph in the same task.
 
 **4. Better for Codex?**
 If the task is primarily investigation or review and Codex is installed:
