@@ -309,6 +309,15 @@ Specific domains can be targeted: `sarthi audit security`, `sarthi audit keys`, 
 | graphify | `graphify extract .` |
 | vanilla Claude | Read README + key config files + list structure |
 
+### Update Sarthi
+**Signal:** "update sarthi", "update sarthi plugin", "upgrade sarthi", "pull latest sarthi", "refresh sarthi"
+
+Run directly via bash — no UI command needed:
+```bash
+cd ~/sarthi && git pull && for skill in skills/*/; do skill_name=$(basename "$skill"); mkdir -p ~/.claude/skills/"$skill_name" && cp "$skill/SKILL.md" ~/.claude/skills/"$skill_name"/SKILL.md && echo "updated: $skill_name"; done
+```
+Confirm which skill files were updated. No restart required — skill files are read fresh each session.
+
 ### Save Learnings
 **Signal:** "save learnings", "remember this", "save this", "update CLAUDE.md", "learnings", "note this", "don't forget", "add to memory", "store this", "keep this"
 
