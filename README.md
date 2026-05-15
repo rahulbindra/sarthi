@@ -33,6 +33,7 @@ Sarthi is a router — it needs tools to route to. Install any combination of th
 | [codex](https://github.com/openai/codex-plugin-cc) | `/plugin install codex@openai-codex` | Parallel code review |
 | [codeburn](https://github.com/getagentseal/codeburn) | `npm install -g codeburn` | Token spend analytics |
 | [superpowers](https://github.com/obra/superpowers) | `/plugin install superpowers@claude-plugins-official` | Parallel agents, TDD, worktrees |
+| [andrej-karpathy-skills](https://github.com/multica-ai/andrej-karpathy-skills) | `/plugin marketplace add multica-ai/andrej-karpathy-skills` then `/plugin install andrej-karpathy-skills@karpathy-skills` | Karpathy coding discipline guidelines |
 
 Sarthi works with any subset — or none at all. Start with compound-engineering and graphify for the most impact.
 
@@ -352,8 +353,18 @@ Copy the ones you need into your project. See `PLACEMENT_AND_USAGE_GUIDE.md` for
 | **claude-md-management** | Saving session learnings to CLAUDE.md | [Anthropic](https://anthropic.com) | [anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official) |
 | **skill-creator** | Generating skills from documentation URLs | [Anthropic](https://anthropic.com) | [anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official) |
 | **frontend-design** | High-quality UI with design system awareness | [Anthropic](https://anthropic.com) | [anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official) |
+| **security-guidance** | Per-edit security warnings (XSS, injection, unsafe patterns) | [Anthropic](https://anthropic.com) | [anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official) |
+| **code-review** | PR-level parallel code review via gh CLI | [Anthropic](https://anthropic.com) | [anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official) |
+| **andrej-karpathy-skills** | Coding discipline: think before coding, simplicity, surgical changes | [Forrest Chang](https://github.com/forrestchang) · [multica-ai](https://github.com/multica-ai) · principles by [Andrej Karpathy](https://x.com/karpathy) | [multica-ai/andrej-karpathy-skills](https://github.com/multica-ai/andrej-karpathy-skills) |
 
 *Sarthi works with any combination of the above — or none at all. Each tool is installed independently.*
+
+### Attribution Notes
+
+- **Karpathy pre-flight** (cost guard step 6) — derived from [Andrej Karpathy's observations](https://x.com/karpathy/status/2015883857489522876) on LLM coding pitfalls, implemented as a Claude Code plugin by [Forrest Chang](https://github.com/forrestchang) and extended by [multica-ai](https://github.com/multica-ai).
+- **SMART objectives** (sarthi-pm) — framework originally described by George T. Doran (1981), "There's a S.M.A.R.T. Way to Write Management's Goals and Objectives."
+- **sarthi-audit security grep patterns** — derived from community security research and well-known credential format specifications (AWS, GitHub, Anthropic, Slack, Google).
+- **sarthi-audit ethical hacker domain** — structured around OWASP Testing Guide and common penetration testing frameworks.
 
 ## 🤔 Why "Sarthi"?
 

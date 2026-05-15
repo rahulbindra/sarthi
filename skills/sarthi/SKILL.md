@@ -271,6 +271,14 @@ If the task is primarily investigation or review and Codex is installed:
 If the same fix approach fails twice — stop:
 > "Same approach failed twice. Let's step back and reconsider before trying again."
 
+**6. Karpathy pre-flight** (for any non-trivial coding task)
+Before writing code, verify three things — adapted from [Andrej Karpathy's observations](https://x.com/karpathy/status/2015883857489522876) on LLM coding pitfalls, via [andrej-karpathy-skills](https://github.com/multica-ai/andrej-karpathy-skills):
+- **Assumptions stated?** If anything is ambiguous, ask — don't guess silently. Present interpretations if multiple exist.
+- **Scope minimal?** Only touch what the task requires. Flag adjacent issues, don't fix them.
+- **Success criteria defined?** State what done looks like, verifiably. For multi-step tasks: `1. [step] → verify: [check]`
+
+Skip this check for trivial tasks (typo fixes, obvious one-liners).
+
 ---
 
 ## Step 4: Announce and Act
