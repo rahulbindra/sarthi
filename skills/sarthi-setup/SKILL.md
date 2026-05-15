@@ -77,15 +77,25 @@ jq '.hooks.PostToolUse = (.hooks.PostToolUse // []) + [{
 }]' ~/.claude/settings.json > /tmp/sarthi-settings-tmp.json && mv /tmp/sarthi-settings-tmp.json ~/.claude/settings.json
 ```
 
-**UserPromptSubmit hook — model advisor enforcement** (if not already present):
+**Install the UserPromptSubmit hook script** (runs inline session monitor + model advisor — no longer asks Claude to invoke the skill, does the assessment itself):
+```bash
+mkdir -p ~/.claude/.sarthi-hooks
+cp "$(dirname "$0")/../../hooks/user-prompt-submit.py" ~/.claude/.sarthi-hooks/user-prompt-submit.py
+```
+
+**UserPromptSubmit hook — wire the script** (if not already present):
 ```bash
 jq '.hooks.UserPromptSubmit = (.hooks.UserPromptSubmit // []) + [{
   "hooks": [{
     "type": "command",
-    "command": "python3 -c \"import sys,json,os; data=json.load(sys.stdin); advisor=os.path.expanduser('"'"'~/.claude/.sarthi-model-advisor-enabled'"'"'); sys.exit(0) if not os.path.exists(advisor) else None; prompt=data.get('"'"'prompt'"'"','"'"''"'"')[:300]; ctx='"'"'[Sarthi] Before responding, invoke sarthi-model-advisor to assess whether the current model is appropriate for this prompt. Skip for informational/opinion questions and short conversational replies (under 5 words: assess from last 3 turns instead). Prompt: '"'"'+prompt; print(json.dumps({'"'"'hookSpecificOutput'"'"':{'"'"'hookEventName'"'"':'"'"'UserPromptSubmit'"'"','"'"'additionalContext'"'"':ctx}}))\" 2>/dev/null || true"
+    "command": "python3 ~/.claude/.sarthi-hooks/user-prompt-submit.py 2>/dev/null || true"
   }]
 }]' ~/.claude/settings.json > /tmp/sarthi-settings-tmp.json && mv /tmp/sarthi-settings-tmp.json ~/.claude/settings.json
 ```
+
+**SessionStart hook — reset session counters** (add counter reset to existing SessionStart command, if not already present — prepend to the existing command string):
+The SessionStart hook command should begin with:
+`rm -f ~/.claude/.sarthi-session-counter ~/.claude/.sarthi-session-warned 2>/dev/null; `
 
 ### Step 4 — Set up ANTHROPIC_API_KEY for graphify (optional)
 
