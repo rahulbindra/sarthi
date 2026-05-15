@@ -120,6 +120,60 @@ If [y]: add to `permanent_skips` in defaults file. If [n]: continue as-is (ask e
 
 ---
 
+## Assessment Integrity
+
+All suggestions made by Sarthi (prompt optimizer, model advisor, session monitor, audit, etc.) must follow this principle:
+
+**Rate systems, prompts, and recommendations based on evidence, not false conservatism. Never start with a hedged or low suggestion and correct upward after user pushback.**
+
+- **Evidence-based:** Suggestions are grounded in actual data (task complexity signals, prompt inefficiency patterns, context fill percentage, audit results)
+- **Real uncertainty flagged separately:** When a suggestion depends on an outcome that might not materialize, flag that assumption explicitly. Example: "Suggests Sonnet — assumes you need standard reasoning; if debugging across services, recommend Opus instead"
+- **No hedging:** Do not suggest Haiku when evidence points to Sonnet, then back up to Sonnet after user questions. Suggest Sonnet upfront with the caveat about why Haiku was considered
+- **Consistent across sessions:** Learning loops (prompt patterns, model preferences, skip counts) must accumulate and strengthen suggestions over time. A rejected signal should not be suggested again in the same form within 3 sessions unless evidence changes
+
+This applies to every suggestion Sarthi makes:
+- Prompt optimizer recommends rewording → based on detected signals, not caution
+- Model advisor suggests a model → based on task complexity, not a safe default
+- Session monitor warns about context → based on estimated fill, not arbitrary thresholds
+- Audit surfaces findings → based on actual failures, not noise
+
+---
+
+## Image and Visual Output Tasks
+
+When Sarthi routes any task that produces or edits an image, diagram, or visual output:
+
+**1. Never assume origin** — do not claim how a file was created (design tool, Claude, code) without evidence. Ask or inspect the file first.
+
+**2. Mandatory visual audit before delivery** — after generating output, Read the image back and compare against the original or spec with a structured checklist:
+- Font family and size match
+- Color scheme and border styles match
+- All original structural elements intact (lines, borders, connectors)
+- New elements aligned and styled consistently with existing elements
+- Text content accurate (capitalization, wording)
+
+**3. Fix before reporting** — if any discrepancy is found in the audit, fix it silently. Do not report complete and leave issues for the user to discover one by one.
+
+**4. Iterate, not accumulate issues** — catch all issues in one audit pass and fix them together. Do not deliver an output, wait for user feedback, fix one issue, repeat. One audit cycle → all fixes → one delivery.
+
+## Diagram Editing Rules
+
+When Sarthi routes any diagram creation or edit task, enforce these rules before any work begins:
+
+**1. Source file first** — immediately ask: "What tool generated this diagram? Is the source file available?" Do not proceed with pixel editing if source is missing. Block the approach and surface the rule.
+
+**2. Diagrams are outputs, not editable artifacts** — a rendered PNG/JPG is never the right thing to edit. The source (`.mmd`, `.fig`, `.svg`, `.drawio`, etc.) is. Pixel manipulation of a rasterized diagram is always the wrong approach.
+
+**3. Save source + output together** — when generating any diagram, always produce and save both the source file and the rendered output side by side. Warn the user if only the output exists.
+
+**4. Regenerate, don't patch** — any content change to a diagram means: update source → re-render. Never insert, erase, or move pixels to simulate a diagram change.
+
+**5. Know the renderer** — mmdc CLI, Mermaid live editor, Claude artifacts, Figma, and Excalidraw each produce different layouts for identical source. Confirm the renderer before attempting re-render, or the output will look different from the original.
+
+**6. Two failed attempts = stop and pivot** — if an approach fails twice, do not compound. Surface the blocker to the user and propose a different strategy.
+
+---
+
 ## Step 1: Detect Available Tools (run once per session)
 
 Silently check what's installed before routing:
