@@ -66,6 +66,27 @@ jq '.hooks.PostToolUse = (.hooks.PostToolUse // []) + [{
 }]' ~/.claude/settings.json > /tmp/sarthi-settings-tmp.json && mv /tmp/sarthi-settings-tmp.json ~/.claude/settings.json
 ```
 
+**PostToolUse hook — intent logging** (if not already present):
+```bash
+jq '.hooks.PostToolUse = (.hooks.PostToolUse // []) + [{
+  "matcher": "Skill",
+  "hooks": [{
+    "type": "command",
+    "command": "python3 -c \"import sys,json,os; from datetime import datetime,timezone; data=json.load(sys.stdin); skill=data.get(\\\"tool_input\\\",{}).get(\\\"skill\\\",\\\"unknown\\\"); entry=json.dumps({\\\"ts\\\":datetime.now(timezone.utc).strftime(\\\"%Y-%m-%dT%H:%M:%SZ\\\"),\\\"routed_to\\\":skill}); open(os.path.expanduser(\\\"~/.claude/.sarthi-intent-log.jsonl\\\"),\\\"a\\\").write(entry+\\\"\\\\n\\\")\" 2>/dev/null || true"
+  }]
+}]' ~/.claude/settings.json > /tmp/sarthi-settings-tmp.json && mv /tmp/sarthi-settings-tmp.json ~/.claude/settings.json
+```
+
+**UserPromptSubmit hook — model advisor enforcement** (if not already present):
+```bash
+jq '.hooks.UserPromptSubmit = (.hooks.UserPromptSubmit // []) + [{
+  "hooks": [{
+    "type": "command",
+    "command": "python3 -c \"import sys,json,os; data=json.load(sys.stdin); advisor=os.path.expanduser('"'"'~/.claude/.sarthi-model-advisor-enabled'"'"'); sys.exit(0) if not os.path.exists(advisor) else None; prompt=data.get('"'"'prompt'"'"','"'"''"'"')[:300]; ctx='"'"'[Sarthi] Before responding, invoke sarthi-model-advisor to assess whether the current model is appropriate for this prompt. Skip for informational/opinion questions and short conversational replies (under 5 words: assess from last 3 turns instead). Prompt: '"'"'+prompt; print(json.dumps({'"'"'hookSpecificOutput'"'"':{'"'"'hookEventName'"'"':'"'"'UserPromptSubmit'"'"','"'"'additionalContext'"'"':ctx}}))\" 2>/dev/null || true"
+  }]
+}]' ~/.claude/settings.json > /tmp/sarthi-settings-tmp.json && mv /tmp/sarthi-settings-tmp.json ~/.claude/settings.json
+```
+
 ### Step 4 — Set up ANTHROPIC_API_KEY for graphify (optional)
 
 If graphify is installed, check whether `ANTHROPIC_API_KEY` is already exported:
@@ -318,15 +339,17 @@ After completing the above, report clearly what was done and what was skipped (a
 ```
 Sarthi setup complete.
 
-✓ SessionStart hook     — added to ~/.claude/settings.json
-✓ PostToolUse hook      — added to ~/.claude/settings.json
-✓ ANTHROPIC_API_KEY     — added to ~/.zprofile
-✓ Morph MCP             — configured in ~/.claude.json
-✓ Prompt optimizer      — enabled
-✓ Session monitor       — enabled
-✓ Model advisor         — enabled
-✓ Pre-commit scan       — installed (~/.claude/.sarthi-hooks/pre-commit)
-✓ codeburn menubar      — launched
+✓ SessionStart hook          — added to ~/.claude/settings.json
+✓ PostToolUse hook (graphify) — added to ~/.claude/settings.json
+✓ PostToolUse hook (intent)  — added to ~/.claude/settings.json
+✓ UserPromptSubmit hook      — added to ~/.claude/settings.json
+✓ ANTHROPIC_API_KEY          — added to ~/.zprofile
+✓ Morph MCP                  — configured in ~/.claude.json
+✓ Prompt optimizer           — enabled
+✓ Session monitor            — enabled
+✓ Model advisor              — enabled
+✓ Pre-commit scan            — installed (~/.claude/.sarthi-hooks/pre-commit)
+✓ codeburn menubar           — launched
 
 Restart Claude Code (or open a new session) for the hooks to take effect.
 ```
