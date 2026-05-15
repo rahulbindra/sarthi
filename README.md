@@ -137,6 +137,7 @@ After that, just describe what you want. Sarthi handles the rest.
 
 | Intent | With tools | Without tools |
 |--------|-----------|---------------|
+| **Idea → product brief** | `/sarthi-pm` — full PM flow | `/sarthi-pm` — always available |
 | Build feature | `/ce-plan` → `/ce-work` | Step-by-step in chat |
 | Large refactor | Morph active + `/ce-work` | Edit file by file |
 | Debug / Fix | `/ce-debug` | Systematic root cause |
@@ -253,6 +254,40 @@ Sarthi tracks when you last reviewed your token spend. Every session start, it c
 - The 3-day clock resets automatically after each audit
 
 You can ignore the nudge and start working — it won't interrupt your session. The timestamp is stored locally in `~/.claude/.sarthi-codeburn-ts`.
+
+## 🗂️ Product Management Flow
+
+When you have an idea and need to shape it before building, Sarthi runs a guided PM interview and produces a complete product brief.
+
+**Trigger:** Say "I have an idea", "help me design an app", "I want to build X", or any pre-implementation framing.
+**Route:** `/sarthi-pm` — always available, no extra tools required.
+
+The flow works in 6 phases:
+
+| Phase | What happens |
+|-------|-------------|
+| **1. Discovery** | 7 focused questions — problem, users, core action, success definition, scope, constraints, differentiation |
+| **2. Synthesis** | Problem statement, user persona, 3–5 opinionated design principles |
+| **3. SMART Objectives** | 3–5 objectives in Specific / Measurable / Achievable / Relevant / Time-bound format |
+| **4. Sprint Breakdown** | Sprints with goals, deliverables, and definitions of done |
+| **5. Product Brief** | Written to `docs/pm/PRODUCT_BRIEF.md` — a durable, updatable doc |
+| **6. /goal Output** | A ready-to-paste `/goal` statement to anchor your Claude Code session |
+
+### /goal Integration
+
+At the end of the flow, Sarthi produces a `/goal`-ready block:
+
+```
+/goal TaskFlow — help solo founders capture and prioritise tasks without switching apps.
+Users: indie hackers running 1-person businesses. Current sprint: core capture + inbox flow.
+Key principles: speed over completeness, one action per screen, offline-first.
+SMART target: by 2026-08-15, 60% of users complete their first task within 5 min of signup.
+Out of scope: team collaboration, billing, integrations.
+```
+
+Paste this into Claude Code at the start of any session. Claude stays anchored to your product context, sprint goal, and SMART objectives throughout — no repeated re-explaining needed. Update the `Current sprint` line as you advance.
+
+If compound-engineering is installed, the flow optionally hands off to `/ce-strategy` and `/ce-brainstorm` to go deeper after the brief is written.
 
 ## 🔍 Weekly Project Audit
 

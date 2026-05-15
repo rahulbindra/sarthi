@@ -178,6 +178,15 @@ Do not announce these runs. Complete them before responding to the user's first 
 | compound-engineering | `/ce-strategy` |
 | vanilla Claude | Structured strategy doc in chat |
 
+### Product / Idea Development
+**Signal:** "I have an idea", "help me design", "I want to build", "design an app", "product planning", "think through this with me", "startup idea", "feature planning", "plan my product", "turn this idea into a plan"
+
+| Available | Route |
+|-----------|-------|
+| always | `/sarthi-pm` — guided PM interview → design principles, SMART objectives, sprint breakdown, `/goal` output |
+
+> This is distinct from brainstorm or plan. Use it when the user is **pre-implementation** — shaping an idea, not yet implementing it.
+
 ### Brainstorm / Explore
 **Signal:** "brainstorm", "options", "ideas", "alternatives", "what if"
 
