@@ -396,7 +396,7 @@ Skip this check for trivial tasks (typo fixes, obvious one-liners).
 
 - **Clear match**: one line stating what you're routing to, then invoke. No permission needed.
 - **Ambiguous**: present 2–3 options with one-line descriptions, ask which fits.
-- **No tools**: use vanilla Claude with the same structured approach.
+- **No tools**: use vanilla Claude with the same structured approach. After responding, ask once: "Should I have routed this to a specific tool? [tool name or n]" — if yes, log the phrase and trigger sarthi-learn to propose adding it as a signal.
 
 Keep announcements tight:
 ✓ "Routing to `/ce-debug`."
@@ -410,14 +410,13 @@ When explaining a concept or correcting a misunderstanding:
 - If the user's understanding is partially wrong, correct the wrong part explicitly before validating the right part.
 - Do not wait for pushback to deliver the accurate framing.
 
-**Intent logging (runs after every routing decision)**
-After routing — or falling back to vanilla Claude — append a log entry silently:
+**Intent logging**
+Routed cases are logged automatically via the PostToolUse hook on the Skill tool — no action needed.
+
+For vanilla Claude fallback only, log the miss manually:
 ```bash
-echo "{\"ts\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",\"phrase\":\"PHRASE\",\"routed_to\":\"TOOL\"}" >> ~/.claude/.sarthi-intent-log.jsonl
+echo "{\"ts\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",\"routed_to\":\"unrouted\"}" >> ~/.claude/.sarthi-intent-log.jsonl
 ```
-- Replace `PHRASE` with a 3–5 word summary of the user's message
-- Replace `TOOL` with the skill invoked (e.g. `ce-debug`, `codeburn`, `graphify`)
-- Use `"unrouted"` when falling back to vanilla Claude — these are miss candidates
 
 ---
 
