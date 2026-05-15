@@ -33,6 +33,32 @@ If `audit:due` (or timestamp file doesn't exist) — add this line to the onboar
 ⚠️  Weekly project audit due. Type "sarthi audit" to run security, privacy, vulnerability, engineering, attribution, usability, legal, ethical hacker, and keys/PII checks.
 ```
 
+**1d. Check for unconfigured opt-in features:**
+```bash
+[ ! -f ~/.claude/.sarthi-prompt-optimizer-enabled ] && echo "optimizer:unconfigured" || echo "optimizer:configured"
+[ ! -f ~/.claude/.sarthi-session-monitor-enabled ] && echo "monitor:unconfigured" || echo "monitor:configured"
+[ ! -f ~/.claude/.sarthi-model-advisor-enabled ] && echo "advisor:unconfigured" || echo "advisor:configured"
+```
+
+If **any** are `unconfigured`, add this block to the onboarding prompt:
+
+```
+⚙️  New features available since your last setup:
+  [a] Prompt optimizer  — detects vague prompts and suggests tighter rewording
+  [b] Session monitor   — warns at ~90% and ~100% context fill
+  [c] Model advisor     — suggests Haiku/Sonnet/Opus per task complexity
+
+Type "sarthi setup new" to configure, or skip to ignore.
+```
+
+Only list the features that are actually unconfigured — not ones already enabled.
+
+When the user types **"sarthi setup new"**:
+- For each unconfigured feature, ask [y/s] individually (same flow as `/sarthi-setup` Step 6)
+- On [y]: `touch` the relevant flag file
+- On [s]: skip silently
+- Confirm what was enabled at the end
+
 **2. Auto-setup graphify** (if CLI present):
 - No graph → run `graphify extract .` silently in background
 - Graph exists → run `graphify update .` silently
