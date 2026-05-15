@@ -15,6 +15,14 @@ Before the user sends their first message, do the following silently and then pr
 
 **1. Run all detection checks** (graphify, codeburn, morph, skills).
 
+**1a. Load session defaults:**
+```bash
+cat ~/.claude/.sarthi-session-defaults.json 2>/dev/null || echo "{}"
+```
+Extract `permanent_skips` (list of tool names) and `skip_counts` (map of tool → session count). Apply permanent skips automatically — do not prompt for them in the welcome screen. List any permanent skips in the welcome prompt with a trailing note: `(skipped by default — type "reset skips [tool]" to change)`.
+
+When the user types **"reset skips [tool]"**: remove that tool from `permanent_skips` in the defaults file and confirm.
+
 **1b. Check codeburn audit cadence** (if codeburn detected):
 ```bash
 ([ ! -f ~/.claude/.sarthi-codeburn-ts ] || python3 -c "import os,time; exit(0 if time.time()-os.path.getmtime(os.path.expanduser('~/.claude/.sarthi-codeburn-ts'))>259200 else 1)" 2>/dev/null) && echo "codeburn:due" || echo "codeburn:recent"
@@ -86,6 +94,29 @@ Only show rows for tools that are detected. If nothing is detected, skip this pr
 - If they say `skip N [N...]` — mark those tools as disabled for the session. Apply vanilla Claude fallback for their intent categories.
 - If they start with a task directly — treat all detected tools as enabled, route normally.
 - If they say `skip all` — disable all routing and behave as vanilla Claude for the whole session.
+
+**After processing skip choices — update skip counts:**
+
+For each tool the user explicitly skipped this session, increment its count in `~/.claude/.sarthi-session-defaults.json`:
+```bash
+python3 -c "
+import json, os, sys
+path = os.path.expanduser('~/.claude/.sarthi-session-defaults.json')
+try:
+    d = json.load(open(path))
+except:
+    d = {'version': 1, 'permanent_skips': [], 'skip_counts': {}}
+skipped = SKIPPED_TOOLS_LIST  # replace with actual list of skipped tool names
+for t in skipped:
+    d['skip_counts'][t] = d['skip_counts'].get(t, 0) + 1
+json.dump(d, open(path, 'w'), indent=2)
+" 2>/dev/null || true
+```
+
+For any tool whose `skip_count` has just reached 3 and is not already in `permanent_skips`, prompt once:
+> "You've skipped **[tool]** in 3 sessions in a row. Skip it permanently by default?  [y] Always skip  [n] Keep asking each session"
+
+If [y]: add to `permanent_skips` in defaults file. If [n]: continue as-is (ask each session, don't increment prompt again until count reaches 6).
 
 ---
 
@@ -357,9 +388,34 @@ This ensures updated routing rules and pre-routing checks take effect immediatel
 Before starting **any** task, check six things:
 
 **1. Deliverable named?**
-If the user's message doesn't state a concrete outcome, ask:
+
+Before asking, check whether this task type has been skipped 3+ times:
+```bash
+python3 -c "
+import json, os
+path = os.path.expanduser('~/.claude/.sarthi-cost-guard-skips.jsonl')
+try:
+    entries = [json.loads(l) for l in open(path) if '\"check\": \"deliverable\"' in l and 'TASK_TYPE' in l]
+    print(len(entries))
+except:
+    print(0)
+" 2>/dev/null || echo "0"
+```
+If count >= 3 for the current task type → auto-skip the deliverable check silently for this task type.
+
+If not auto-skipped: if the user's message doesn't state a concrete outcome, ask:
 > "What's the one-sentence result of this task?"
 Don't proceed until answered.
+
+If the user skips ("just do it", "skip", dismisses) — log the skip with its task type:
+```bash
+python3 -c "
+import json, os
+from datetime import datetime, timezone
+entry = json.dumps({'ts': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'), 'task_type': 'TASK_TYPE', 'check': 'deliverable'})
+open(os.path.expanduser('~/.claude/.sarthi-cost-guard-skips.jsonl'), 'a').write(entry + '\n')
+" 2>/dev/null || true
+```
 
 Skip this check for: informational questions ("how does X work", "where is X", "what is X"), cost/spend queries, codebase navigation requests, and research/lookup requests. Apply only when the task involves writing or modifying code or files.
 
@@ -384,10 +440,36 @@ If the same fix approach fails twice — stop:
 > "Same approach failed twice. Let's step back and reconsider before trying again."
 
 **7. Karpathy pre-flight** (for any non-trivial coding task)
-Before writing a single line of code, do three things interactively — adapted from [Andrej Karpathy's observations](https://x.com/karpathy/status/2015883857489522876) on LLM coding pitfalls, via [andrej-karpathy-skills](https://github.com/multica-ai/andrej-karpathy-skills):
+
+Before presenting pre-flight, check the correction rate for this task type:
+```bash
+python3 -c "
+import json, os
+path = os.path.expanduser('~/.claude/.sarthi-preflight-log.jsonl')
+try:
+    entries = [json.loads(l) for l in open(path) if 'TASK_TYPE' in l]
+    print(len(entries))
+except:
+    print(0)
+" 2>/dev/null || echo "0"
+```
+If correction count for this task type >= 3 → run **thorough mode**: present each of the three sub-questions individually with `AskUserQuestion`, wait for explicit confirmation on each before proceeding. Otherwise run standard mode (present all three as a batch statement).
+
+Adapted from [Andrej Karpathy's observations](https://x.com/karpathy/status/2015883857489522876) on LLM coding pitfalls, via [andrej-karpathy-skills](https://github.com/multica-ai/andrej-karpathy-skills):
 - **Assumptions stated?** If anything is ambiguous, **stop and ask the user** — do not guess silently. Present your interpretations and wait for confirmation before proceeding.
 - **Scope minimal?** Confirm with the user what's in and out. Flag adjacent issues you notice, but don't fix them.
 - **Success criteria defined?** State out loud what done looks like, verifiably. For multi-step tasks: `1. [step] → verify: [check]`. Get user agreement.
+
+When the user corrects a stated assumption, stated scope, or stated success criterion — log the correction:
+```bash
+python3 -c "
+import json, os
+from datetime import datetime, timezone
+entry = json.dumps({'ts': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'), 'task_type': 'TASK_TYPE', 'correction_type': 'assumption'})
+open(os.path.expanduser('~/.claude/.sarthi-preflight-log.jsonl'), 'a').write(entry + '\n')
+" 2>/dev/null || true
+```
+Use the actual `correction_type`: `assumption`, `scope`, or `success_criteria`.
 
 This check is interactive — internal self-assessment alone doesn't count. If you skip asking the user and just proceed, you have not done this check.
 
@@ -398,7 +480,16 @@ Skip this check for trivial tasks (typo fixes, obvious one-liners).
 ## Step 4: Announce and Act
 
 - **Clear match**: one line stating what you're routing to, then invoke. No permission needed.
-- **Ambiguous**: present 2–3 options with one-line descriptions, ask which fits.
+- **Ambiguous**: present 2–3 options with one-line descriptions, ask which fits. Once the user picks an option, log the original phrase and the chosen intent to the intent log so `sarthi-learn` can promote it to an auto-routing rule over time:
+  ```bash
+  python3 -c "
+  import json, os
+  from datetime import datetime, timezone
+  entry = json.dumps({'ts': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'), 'routed_to': 'CHOSEN_INTENT', 'source': 'clarification', 'phrase': 'ORIGINAL_PHRASE'})
+  open(os.path.expanduser('~/.claude/.sarthi-intent-log.jsonl'), 'a').write(entry + '\n')
+  " 2>/dev/null || true
+  ```
+  Replace `CHOSEN_INTENT` and `ORIGINAL_PHRASE` with the actual values. These entries are distinct from normal routed entries (`source: "clarification"`) and feed `sarthi-learn`'s phrase-to-intent promotion flow.
 - **No tools**: use vanilla Claude with the same structured approach. After responding, ask once: "Should I have routed this to a specific tool? [tool name or n]" — if yes, log the phrase and trigger sarthi-learn to propose adding it as a signal.
 
 Keep announcements tight:

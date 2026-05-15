@@ -262,6 +262,24 @@ This flow reads the existing product brief, identifies where you are in the spri
 
 ---
 
+### SP Phase 0b — Load velocity history
+
+```bash
+cat docs/pm/SPRINT_LOG.md 2>/dev/null || echo "no-log"
+```
+
+If the log exists, compute velocity metrics from past sprints:
+- **Completion rate** — fraction of planned deliverables checked off (`- [x]`) vs. total (`- [ ]` + `- [x]`)
+- **Timeline accuracy** — how many sprints ended on or before their planned end date
+
+Surface a one-line velocity summary before the planning interview:
+```
+📊 Sprint velocity: you completed ~[N]% of deliverables on average across [K] sprints.
+   [If < 70%]: Consider reducing deliverable count this sprint.
+   [If > 90%]: You're consistently hitting scope — feel free to stretch.
+```
+If no log or fewer than 2 sprints recorded — skip silently.
+
 ### SP Phase 1 — Read context from existing brief
 
 ```bash
@@ -319,6 +337,25 @@ Push back if the goal is too vague or covers too much. A good sprint goal fits i
 Repeat for each sprint in the planned range.
 
 ---
+
+### SP Phase 3b — Log planned sprints to SPRINT_LOG.md
+
+After gathering sprint details, append each newly planned sprint to `docs/pm/SPRINT_LOG.md` (create if it doesn't exist):
+
+```markdown
+## Sprint [N] — [Name]
+Planned end: [date]
+Planned deliverables:
+- [ ] [Deliverable 1]
+- [ ] [Deliverable 2]
+- [ ] [Deliverable 3]
+Status: planned
+```
+
+When the user later returns and a sprint's end date has passed, check `docs/pm/SPRINT_LOG.md` for unchecked deliverables and prompt:
+> "Sprint [N] ended on [date]. How many deliverables did you complete? (Update the checkboxes in SPRINT_LOG.md and I'll compute your velocity.)"
+
+This log is the source of truth for velocity. Users can edit checkboxes directly in the file.
 
 ### SP Phase 4 — Update PRODUCT_BRIEF.md
 

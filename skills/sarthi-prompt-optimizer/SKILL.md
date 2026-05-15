@@ -30,7 +30,13 @@ After loading, **reset `session_consecutive_rejects` to 0** in-memory — this c
 
 ## Step 2 — Assess prompt for inefficiency signals
 
-Score the prompt against these signals. A suggestion is only warranted if **2 or more** signals are present — never suggest for a single signal alone.
+Score the prompt against these signals. The base threshold is **2 or more** signals — but adjust per-signal based on the user's reject history:
+
+- For each signal, compute its **effective weight**: `1.0` by default, reduced to `0.5` if that signal has been rejected 2+ times with a reason, reduced to `0.0` (ignored) if rejected 3+ times with a reason. This means a heavily-rejected signal no longer contributes toward the threshold.
+- Sum the effective weights of all detected signals. Trigger a suggestion only if the weighted sum >= 2.0.
+- If a signal has been accepted 3+ times, boost its weight to `1.5` — it counts more toward triggering the threshold.
+
+This means the optimizer personalises over time: signals the user consistently rejects fade out; signals they accept become more sensitive.
 
 | Signal | Description | Examples |
 |--------|-------------|---------|
@@ -103,6 +109,7 @@ Wait for response.
   }
   ```
 - Increment `session_consecutive_rejects` by 1
+- For each rejected signal, check its total reject count in learnings. If a signal now has 3+ rejections with reasons → reduce its effective weight to 0.0 (log this as a note: "Signal `[signal]` has been rejected 3+ times — it will no longer contribute to suggestions.")
 - If `session_consecutive_rejects >= 2`: set `session_suppressed: true` and note:
   > "Got it — I'll hold suggestions for the rest of this session. Run `/sarthi-prompt-optimizer reset` to re-enable."
 

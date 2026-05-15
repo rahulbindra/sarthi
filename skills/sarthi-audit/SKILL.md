@@ -21,6 +21,22 @@ If the user passed a specific domain argument, run only that domain. Otherwise r
 
 Domains: `security`, `privacy`, `vulnerability`, `engineering`, `attribution`, `usability`, `legal`, `hacker`, `keys`
 
+**Load audit history and false positive suppressions:**
+```bash
+cat ~/.claude/.sarthi-audit-log.jsonl 2>/dev/null | tail -50
+cat ~/.claude/.sarthi-audit-suppressions.json 2>/dev/null || echo "{}"
+```
+
+From the audit log, compute recurring failures — domains that have returned `fail` or `warn` in 2 or more of the last 3 audits. If any are found, surface before dispatching agents:
+```
+⚠️  Recurring findings from previous audits:
+  [domain] — failed/warned in N of the last 3 audits
+  ...
+Run those domains first? [y] Yes — prioritise  [n] No — run in standard order
+```
+
+Pass the suppressions map to each agent (see Step 2). Agents must skip any finding whose file path + pattern key appears in the suppressions map.
+
 ---
 
 ## Step 2 — Dispatch parallel sub-agents
@@ -243,10 +259,56 @@ Status rules:
 
 ---
 
-## Step 4 — Reset the weekly clock
+## Step 4 — Log results and reset clock
 
+Append one entry per domain to `~/.claude/.sarthi-audit-log.jsonl`:
+```bash
+python3 -c "
+import json, os
+from datetime import datetime, timezone
+results = DOMAIN_RESULTS_LIST  # list of {'domain': 'security', 'status': 'pass|warn|fail'}
+path = os.path.expanduser('~/.claude/.sarthi-audit-log.jsonl')
+ts = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+with open(path, 'a') as f:
+    for r in results:
+        f.write(json.dumps({'ts': ts, 'domain': r['domain'], 'status': r['status']}) + '\n')
+" 2>/dev/null || true
+```
+
+Reset the weekly clock:
 ```bash
 touch ~/.claude/.sarthi-audit-ts
 ```
 
 Confirm to the user: "Audit complete. Next audit due in 7 days."
+
+---
+
+## False positive suppression
+
+When the user says **"mark as false positive"** or **"suppress [finding]"** after reviewing audit results:
+
+1. Ask for the file path and pattern to suppress (or infer from the last-mentioned finding).
+2. Add to `~/.claude/.sarthi-audit-suppressions.json`:
+
+```bash
+python3 -c "
+import json, os
+path = os.path.expanduser('~/.claude/.sarthi-audit-suppressions.json')
+try:
+    s = json.load(open(path))
+except:
+    s = {'version': 1, 'suppressions': []}
+s['suppressions'].append({'file': 'FILE_PATH', 'pattern': 'PATTERN', 'domain': 'DOMAIN', 'added': 'DATE', 'reason': 'USER_REASON'})
+json.dump(s, open(path, 'w'), indent=2)
+" 2>/dev/null || true
+```
+
+Confirm: "Suppressed. Future audits will skip this finding in [file]. Run `sarthi audit clear-suppressions` to remove all suppressions."
+
+When the user runs **`sarthi audit clear-suppressions`**:
+```bash
+rm ~/.claude/.sarthi-audit-suppressions.json && echo "All suppressions cleared."
+```
+
+When the user runs **`sarthi audit suppressions`**: read and display the suppressions list.

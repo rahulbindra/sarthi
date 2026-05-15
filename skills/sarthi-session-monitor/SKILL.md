@@ -24,13 +24,24 @@ All current Claude models share a 200k token context window.
 
 ---
 
-## Step 1 — Check if enabled
+## Step 1 — Check if enabled and load history
 
 ```bash
 [ -f ~/.claude/.sarthi-session-monitor-enabled ] && echo "enabled" || echo "disabled"
 ```
 
 If disabled, exit immediately.
+
+Load monitor history to understand the user's past response patterns:
+```bash
+cat ~/.claude/.sarthi-monitor-log.jsonl 2>/dev/null | tail -20
+```
+
+From the last 10 entries, compute:
+- `compact_rate` — fraction of `warned_90` entries where a subsequent `compact_ran: true` entry appears within the same session date
+- `ignored_rate` — fraction of warnings with no follow-up action logged
+
+Use these to adapt the warning tone (see Step 3).
 
 ---
 
@@ -68,8 +79,17 @@ Track two marks in session memory (not persisted to disk — resets when session
 
 **At `approaching` (~90%)** and `warned_90` is false:
 
-Set `warned_90 = true`. Show:
+Set `warned_90 = true`. Log the warning:
+```bash
+python3 -c "
+import json, os
+from datetime import datetime, timezone
+entry = json.dumps({'ts': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'), 'event': 'warned_90', 'compact_ran': False})
+open(os.path.expanduser('~/.claude/.sarthi-monitor-log.jsonl'), 'a').write(entry + '\n')
+" 2>/dev/null || true
+```
 
+Show (adapt tone based on history — if `ignored_rate > 0.7`, lead with stronger urgency; if `compact_rate > 0.7`, lead with `/compact` as the obvious choice):
 ```
 ⚠️  Session approaching context limit (~90% full).
 
@@ -81,10 +101,35 @@ Options:
 Your current task will proceed — this is just a heads-up.
 ```
 
+If the user runs `/compact` after this warning, update the log entry to `compact_ran: true`:
+```bash
+python3 -c "
+import json, os
+path = os.path.expanduser('~/.claude/.sarthi-monitor-log.jsonl')
+lines = open(path).readlines()
+for i in range(len(lines)-1, -1, -1):
+    e = json.loads(lines[i])
+    if e.get('event') == 'warned_90' and not e.get('compact_ran'):
+        e['compact_ran'] = True
+        lines[i] = json.dumps(e) + '\n'
+        break
+open(path, 'w').writelines(lines)
+" 2>/dev/null || true
+```
+
 **At `full` (~100%)** and `warned_100` is false:
 
-Set `warned_100 = true`. Show:
+Set `warned_100 = true`. Log the warning:
+```bash
+python3 -c "
+import json, os
+from datetime import datetime, timezone
+entry = json.dumps({'ts': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'), 'event': 'warned_100'})
+open(os.path.expanduser('~/.claude/.sarthi-monitor-log.jsonl'), 'a').write(entry + '\n')
+" 2>/dev/null || true
+```
 
+Show:
 ```
 🔴  Session at context capacity (~100% full).
 

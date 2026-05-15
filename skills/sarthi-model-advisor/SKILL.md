@@ -40,9 +40,14 @@ After loading, **reset `session_consecutive_rejects` to 0** in-memory — this c
 
 ---
 
-## Step 2 — Detect current model
+## Step 2 — Detect current model and task type
 
 The current model is the one this session was started with. Infer it from session context (Claude knows its own model). Map to: `haiku`, `sonnet`, or `opus`.
+
+Also classify the current task into one of these task types (used for per-type learning):
+`build`, `debug`, `refactor`, `review`, `research`, `navigation`, `ship`, `ideate`, `audit`, `other`
+
+Infer from the prompt and the intent routing decision made by Sarthi. This task type is used as a second dimension in the learnings lookup.
 
 ---
 
@@ -113,7 +118,10 @@ Only suggest if **current model ≠ recommended model AND the mismatch is meanin
 | Haiku | Opus | Yes | Complex task — Haiku likely to struggle |
 | Any | Same | No | Already on the right model — skip silently |
 
-Also apply learnings: if the suggested model transition has been rejected 2+ times with a similar task type, suppress the suggestion.
+Also apply learnings with the task-type dimension:
+- Check `task_type_transitions["TASK_TYPE"]["TRANSITION"]` (e.g. `task_type_transitions["debug"]["sonnet_to_haiku"]`).
+- If that specific task-type + transition pair has been rejected 2+ times → suppress the suggestion for this task type even if the global transition count would trigger it.
+- If it has been accepted 3+ times for this task type → lower the suggestion threshold (suggest even if the mismatch is borderline).
 
 ---
 
@@ -159,7 +167,7 @@ Write updated learnings to `~/.claude/.sarthi-model-learnings.json`:
 
 ```json
 {
-  "version": 1,
+  "version": 2,
   "last_updated": "<today's date>",
   "session_consecutive_rejects": 0,
   "transitions": {
@@ -170,11 +178,25 @@ Write updated learnings to `~/.claude/.sarthi-model-learnings.json`:
     "haiku_to_sonnet": { "accepted": 0, "rejected": 0, "last_reject_reason": "" },
     "haiku_to_opus":   { "accepted": 0, "rejected": 0, "last_reject_reason": "" }
   },
+  "task_type_transitions": {
+    "build":      { "sonnet_to_haiku": { "accepted": 0, "rejected": 0 } },
+    "debug":      { "sonnet_to_haiku": { "accepted": 0, "rejected": 0 } },
+    "refactor":   {},
+    "review":     {},
+    "research":   {},
+    "navigation": {},
+    "ship":       {},
+    "ideate":     {},
+    "audit":      {},
+    "other":      {}
+  },
   "total_accepted": 0,
   "total_rejected": 0,
   "total_skipped": 0
 }
 ```
+
+When updating learnings after a user response, always update both the global `transitions` entry and the matching `task_type_transitions[task_type][transition]` entry. Add new task_type or transition keys as needed — the structure is open-ended.
 
 ---
 
