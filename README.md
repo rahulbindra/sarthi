@@ -18,6 +18,26 @@
 
 Sarthi is a Claude Code plugin that acts as an **intelligent routing layer** for your AI development stack. Instead of remembering which tool to use when, describe what you want in plain language — Sarthi detects your intent and routes to the right tool automatically. Falls back gracefully to vanilla Claude if you don't have a tool installed.
 
+## ⚡ Quickstart
+
+```
+/plugin marketplace add https://github.com/rahulbindra/sarthi
+/plugin install sarthi
+/sarthi-setup
+```
+
+Restart Claude Code. On next launch you'll see the Sarthi welcome prompt listing your active tools — that's it.
+
+> **Using graphify?** It needs its own `ANTHROPIC_API_KEY` (Claude Code uses OAuth, not an API key). Add it to your shell profile before running setup:
+> ```bash
+> export ANTHROPIC_API_KEY=sk-ant-...
+> ```
+> Get a key at [console.anthropic.com/keys](https://console.anthropic.com/keys). Only the first graph build costs tokens — all subsequent refreshes are free.
+
+**Recommended first install:** [compound-engineering](https://github.com/EveryInc/compound-engineering-plugin) + [graphify](https://github.com/safishamsi/graphify) covers 80% of daily use.
+
+---
+
 ## 📦 Install
 
 ### Prerequisites
@@ -35,19 +55,12 @@ Sarthi is a router — it needs tools to route to. Install any combination of th
 | [superpowers](https://github.com/obra/superpowers) | `/plugin install superpowers@claude-plugins-official` | Parallel agents, TDD, worktrees |
 | [andrej-karpathy-skills](https://github.com/multica-ai/andrej-karpathy-skills) | `/plugin marketplace add multica-ai/andrej-karpathy-skills` then `/plugin install andrej-karpathy-skills@karpathy-skills` | Extended Karpathy discipline guidelines (optional — Sarthi includes the Karpathy pre-flight check built-in regardless) |
 
-Sarthi works with any subset — or none at all. Start with compound-engineering and graphify for the most impact.
-
-> **Note for graphify users:** Claude Code authenticates via OAuth, not an API key — so `ANTHROPIC_API_KEY` is not set in your shell automatically. Graphify is a separate CLI that makes direct API calls and needs its own key. Create one at [console.anthropic.com/keys](https://console.anthropic.com/keys) and add it to your shell profile:
-> ```bash
-> export ANTHROPIC_API_KEY=sk-ant-...
-> ```
-> Only the initial `graphify extract .` costs tokens. All subsequent `graphify update .` calls (run automatically by the PostToolUse hook after every file edit) are free.
+Sarthi works with any subset — or none at all. **Recommended start:** compound-engineering + graphify.
 
 ### Step 1 — Install the plugin
 ```
 /plugin marketplace add https://github.com/rahulbindra/sarthi
 /plugin install sarthi
-/reload-plugins
 ```
 
 ### Step 2 — Run setup (one command does everything)
@@ -61,7 +74,7 @@ This automatically configures:
 - **codeburn menubar** for passive background cost monitoring
 - Optionally, a **global pre-commit hook** that scans staged files for hardcoded secrets before every git commit
 
-> ⚠️ **Restart Claude Code after setup for hooks to take effect.**
+> ⚠️ **Restart Claude Code after setup.** On next launch, you'll see the Sarthi welcome prompt automatically — that confirms hooks are active. If you don't see it, re-run `/sarthi-setup`.
 
 <details>
 <summary>Manual setup (if you prefer to configure hooks yourself)</summary>
