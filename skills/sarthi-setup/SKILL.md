@@ -12,6 +12,7 @@ Run this skill once after installing Sarthi. It configures everything automatica
 1. Adds the Sarthi SessionStart hook to `~/.claude/settings.json`
 2. Adds the graphify PostToolUse hook to `~/.claude/settings.json`
 3. Installs codeburn menubar (if codeburn is installed)
+4. Optionally sets `ANTHROPIC_API_KEY` in your shell profile (needed for graphify; skippable)
 
 ## Steps
 
@@ -62,14 +63,49 @@ jq '.hooks.PostToolUse = (.hooks.PostToolUse // []) + [{
 }]' ~/.claude/settings.json > /tmp/sarthi-settings-tmp.json && mv /tmp/sarthi-settings-tmp.json ~/.claude/settings.json
 ```
 
-### Step 4 — Install codeburn menubar
+### Step 4 — Set up ANTHROPIC_API_KEY for graphify (optional)
+
+If graphify is installed, check whether `ANTHROPIC_API_KEY` is already exported:
+```bash
+grep -r "ANTHROPIC_API_KEY" ~/.zshrc ~/.zprofile ~/.bashrc ~/.bash_profile ~/.profile 2>/dev/null | grep -v "^$"
+```
+
+If it is already set, skip this step silently.
+
+If it is NOT set, ask the user:
+
+```
+Graphify needs its own ANTHROPIC_API_KEY to build the knowledge graph.
+(Claude Code uses OAuth — that key doesn't carry over to the graphify CLI.)
+
+Would you like to add it to your shell profile now?
+  [y] Yes — paste your key and I'll add it to ~/.zprofile (or your active profile)
+  [s] Skip — I'll set it up manually later
+
+Your choice (y/s):
+```
+
+If the user chooses **y**:
+- Ask: "Paste your ANTHROPIC_API_KEY (starts with sk-ant-):"
+- Detect the active shell profile in this order: `~/.zprofile`, `~/.zshrc`, `~/.bash_profile`, `~/.bashrc`, `~/.profile` — use the first one that exists
+- Append to that file:
+  ```bash
+  export ANTHROPIC_API_KEY=<key they pasted>
+  ```
+- Confirm: "Added to <profile path>. Run `source <profile path>` or open a new terminal for it to take effect."
+
+If the user chooses **s**:
+- Show: "Skipped. You can add it manually later: `export ANTHROPIC_API_KEY=sk-ant-...` in your shell profile."
+- Continue to next step.
+
+### Step 5 — Install codeburn menubar
 
 If codeburn is installed and menubar is not already running:
 ```bash
 codeburn menubar &
 ```
 
-### Step 5 — Confirm to the user
+### Step 6 — Confirm to the user
 
 After completing the above, report clearly what was done and what was skipped (already configured). Use this format:
 
@@ -78,6 +114,7 @@ Sarthi setup complete.
 
 ✓ SessionStart hook     — added to ~/.claude/settings.json
 ✓ PostToolUse hook      — added to ~/.claude/settings.json
+✓ ANTHROPIC_API_KEY     — added to ~/.zprofile
 ✓ codeburn menubar      — launched
 
 Restart Claude Code (or open a new session) for the hooks to take effect.
@@ -85,6 +122,8 @@ Restart Claude Code (or open a new session) for the hooks to take effect.
 
 If something was already configured, show `— already configured` instead of `— added`.
 If codeburn is not installed, show `— codeburn not installed, skipped`.
+If the user skipped the API key step, show `— skipped (set manually later)`.
+If ANTHROPIC_API_KEY was already in their profile, show `— already configured`.
 
 ### Important
 
