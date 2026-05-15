@@ -296,10 +296,12 @@ If the same fix approach fails twice — stop:
 > "Same approach failed twice. Let's step back and reconsider before trying again."
 
 **6. Karpathy pre-flight** (for any non-trivial coding task)
-Before writing code, verify three things — adapted from [Andrej Karpathy's observations](https://x.com/karpathy/status/2015883857489522876) on LLM coding pitfalls, via [andrej-karpathy-skills](https://github.com/multica-ai/andrej-karpathy-skills):
-- **Assumptions stated?** If anything is ambiguous, ask — don't guess silently. Present interpretations if multiple exist.
-- **Scope minimal?** Only touch what the task requires. Flag adjacent issues, don't fix them.
-- **Success criteria defined?** State what done looks like, verifiably. For multi-step tasks: `1. [step] → verify: [check]`
+Before writing a single line of code, do three things interactively — adapted from [Andrej Karpathy's observations](https://x.com/karpathy/status/2015883857489522876) on LLM coding pitfalls, via [andrej-karpathy-skills](https://github.com/multica-ai/andrej-karpathy-skills):
+- **Assumptions stated?** If anything is ambiguous, **stop and ask the user** — do not guess silently. Present your interpretations and wait for confirmation before proceeding.
+- **Scope minimal?** Confirm with the user what's in and out. Flag adjacent issues you notice, but don't fix them.
+- **Success criteria defined?** State out loud what done looks like, verifiably. For multi-step tasks: `1. [step] → verify: [check]`. Get user agreement.
+
+This check is interactive — internal self-assessment alone doesn't count. If you skip asking the user and just proceed, you have not done this check.
 
 Skip this check for trivial tasks (typo fixes, obvious one-liners).
 
