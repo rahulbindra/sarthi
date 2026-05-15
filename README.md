@@ -27,13 +27,13 @@ Sarthi is a router — it needs tools to route to. Install any combination of th
 | Tool | Install | What it unlocks |
 |------|---------|----------------|
 | [compound-engineering](https://github.com/EveryInc/compound-engineering-plugin) | `/plugin install compound-engineering@compound-engineering-plugin` | Build, debug, review, ship, frontend, strategy |
-| [graphify](https://github.com/safishamsi/graphify) | `pip install graphifyy` | Codebase knowledge graph navigation |
+| [graphify](https://github.com/safishamsi/graphify) | `pip install graphifyy` *(note: two y's — this is the correct PyPI package name)* | Codebase knowledge graph navigation |
 | [morph](https://github.com/morphllm/morph-claude-code-plugin) | See Morph docs | Fast bulk code edits via MCP |
 | [firecrawl](https://github.com/mendableai/firecrawl) | `/plugin install firecrawl@claude-plugins-official` | Web research and scraping |
 | [codex](https://github.com/openai/codex-plugin-cc) | `/plugin install codex@openai-codex` | Parallel code review |
 | [codeburn](https://github.com/getagentseal/codeburn) | `npm install -g codeburn` | Token spend analytics |
 | [superpowers](https://github.com/obra/superpowers) | `/plugin install superpowers@claude-plugins-official` | Parallel agents, TDD, worktrees |
-| [andrej-karpathy-skills](https://github.com/multica-ai/andrej-karpathy-skills) | `/plugin marketplace add multica-ai/andrej-karpathy-skills` then `/plugin install andrej-karpathy-skills@karpathy-skills` | Karpathy coding discipline guidelines |
+| [andrej-karpathy-skills](https://github.com/multica-ai/andrej-karpathy-skills) | `/plugin marketplace add multica-ai/andrej-karpathy-skills` then `/plugin install andrej-karpathy-skills@karpathy-skills` | Extended Karpathy discipline guidelines (optional — Sarthi includes the Karpathy pre-flight check built-in regardless) |
 
 Sarthi works with any subset — or none at all. Start with compound-engineering and graphify for the most impact.
 
@@ -125,8 +125,8 @@ Sarthi ready. Here's what's active this session:
   [3] morph                 — fast bulk code edits (MCP active)
   [4] firecrawl             — web research and scraping
   [5] codex                 — parallel code review and investigation
-  [6] codeburn              — token spend analytics (audit due every 3 days)
-  [7] superpowers           — parallel agents, TDD, git worktrees
+  [6] codeburn              — token spend analytics (run: codeburn)
+  [7] superpowers           — parallel agents, TDD, systematic debugging, code review, verification
 
 Skip any tool for this session? Type e.g. "skip 3 5" — or just start working to use all.
 Skipped tools fall back to standard Claude behaviour.
@@ -235,13 +235,14 @@ Just describe what you want in plain language. Sarthi detects intent and routes 
 
 ## 🛡️ Cost Guard
 
-Before every task, Sarthi checks five things:
+Before every task, Sarthi checks six things:
 
-1. **Deliverable named?** — Asks for a one-sentence outcome if missing
+1. **Deliverable named?** — Asks for a one-sentence outcome if missing (skipped for informational queries and navigation requests)
 2. **Graphify available?** — Queries the knowledge graph before any file reads or grep. On a new repo, builds the graph automatically in the background (`graphify extract .` uses LLM tokens once; all subsequent refreshes are free)
 3. **Morph available?** — Surfaces Morph automatically for bulk/refactor edits
 4. **Better for Codex?** — Offers an independent parallel review rather than doing it inline
 5. **Retry guard** — Stops after two failed attempts and prompts reconsideration
+6. **Karpathy pre-flight** — Before any non-trivial code change: stops and asks the user to confirm assumptions, scope, and success criteria interactively before writing a single line
 
 ## 📏 Session Monitor (opt-in)
 
@@ -256,7 +257,7 @@ Enable during `/sarthi-setup` or: `touch ~/.claude/.sarthi-session-monitor-enabl
 
 Both nudges are **non-blocking** — the current task proceeds regardless. Neither fires more than once. Once both have fired, Sarthi goes silent for the rest of the session.
 
-Context fill is measured via codeburn if installed, otherwise estimated from conversation depth. On estimation, thresholds are slightly conservative (80% / 95%) to account for imprecision.
+Context fill is estimated from conversation signals — message count, tool output volume, file edit count, and `/compact` history. Codeburn tracks daily/monthly spend totals only and does not expose per-session token counts.
 
 ---
 

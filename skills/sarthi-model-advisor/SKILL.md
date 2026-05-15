@@ -19,6 +19,8 @@ Assesses task complexity and suggests the most token-efficient Claude model befo
 | Sonnet 4.6 | `claude-sonnet-4-6` | Standard development work | Medium |
 | Opus 4.7 | `claude-opus-4-7` | Complex reasoning, architecture, multi-system | Highest |
 
+> Model IDs verified against the Claude Code environment at time of writing. Haiku uses a dated suffix; Sonnet and Opus do not — this reflects the actual API identifiers, not a typo. Update these when new model versions release.
+
 ---
 
 ## Step 1 — Check if enabled and load learnings
@@ -34,7 +36,7 @@ Load learnings:
 cat ~/.claude/.sarthi-model-learnings.json 2>/dev/null || echo "{}"
 ```
 
-Check `session_consecutive_rejects`. If >= 2, exit silently for this session.
+After loading, **reset `session_consecutive_rejects` to 0** in-memory — this counter is per-session only and must not carry forward from previous sessions. Transition preferences and totals are persisted; session state is not.
 
 ---
 

@@ -62,10 +62,10 @@ At the start of each session, Sarthi silently checks which tools are available:
 > **Transparency note:** Sarthi reads `~/.claude.json` solely to check if `mcpServers["morph-mcp"]` exists. It does not transmit, log, or store any data from this file. The check is a local read-only shell command that runs on your machine.
 
 ### Stage 2: Intent Matching
-Sarthi reads your message and matches it to one of 13 intent categories using signal words and patterns. It never routes to a tool that isn't installed.
+Sarthi reads your message and matches it to one of 16 intent categories using signal words and patterns. It never routes to a tool that isn't installed.
 
 ### Stage 3: Cost Guard + Routing
-Before acting, Sarthi runs a four-point cost check, then either invokes the tool immediately (clear match) or presents 2–3 options (ambiguous).
+Before acting, Sarthi runs a six-point cost check, then either invokes the tool immediately (clear match) or presents 2–3 options (ambiguous).
 
 ---
 
@@ -82,8 +82,10 @@ Sarthi recognises these intents:
 | **Ship** | "commit this", "push and open a PR", "ship what I have" |
 | **Navigate** | "how does auth work", "where is the notification logic", "what calls PulseScreen" |
 | **Strategy** | "what should we build next", "update the roadmap", "write our strategy" |
+| **Product / PM** | "I have an idea", "help me design an app", "plan my product", "I want to build X" |
 | **Brainstorm** | "give me ideas for", "what are the options", "brainstorm how we could" |
 | **Research** | "look up the Stripe docs", "what does this library do", "scrape this URL" |
+| **Project Audit** | "sarthi audit", "run a security audit", "check for keys", "usability audit" |
 | **Cost** | "how much have I spent", "optimize my usage", "what's my token burn" |
 | **New repo** | "just cloned this", "set up a new project", "map this codebase" |
 | **Learnings** | "remember this", "save this approach", "update CLAUDE.md" |
@@ -110,7 +112,7 @@ Sarthi recognises these intents:
 | Intent | Command |
 |--------|---------|
 | Navigate (graph exists) | `graphify query "..."` |
-| Navigate (no graph) | `graphify extract . --backend claude` |
+| Navigate (no graph) | `graphify extract .` |
 | Cross-module question | `graphify path "A" "B"` |
 | Explain a concept | `graphify explain "X"` |
 
@@ -149,6 +151,18 @@ If the same approach fails twice, Sarthi stops:
 
 This prevents the retry spiral that causes expensive sessions.
 
+### Check 5: Morph available?
+For tasks involving multiple file edits, Sarthi surfaces Morph if configured:
+> "Morph is active — bulk edits will be applied faster automatically."
+
+### Check 6: Karpathy pre-flight
+Before writing any non-trivial code, Sarthi stops and asks the user interactively:
+- **Assumptions stated?** — clarifies ambiguities before proceeding, does not guess
+- **Scope minimal?** — confirms what's in and out, flags adjacent issues without fixing them
+- **Success criteria defined?** — states verifiable done conditions and gets user agreement
+
+This check is interactive. Internal self-assessment alone does not count. Skipped for trivial tasks (typo fixes, one-liners).
+
 ---
 
 ## Auto-activation
@@ -162,7 +176,7 @@ By default, Sarthi is invoked manually with `/sarthi`. To activate it automatica
       "hooks": [{
         "type": "command",
         "statusMessage": "Sarthi loading...",
-        "command": "python3 -c \"import json; print(json.dumps({'hookSpecificOutput': {'hookEventName': 'SessionStart', 'additionalContext': 'Act as Sarthi: read ~/.claude/skills/sarthi/SKILL.md and apply its routing rules to every user message this session.'}}))\" "
+        "command": "python3 -c \"import json; print(json.dumps({'hookSpecificOutput': {'hookEventName': 'SessionStart', 'additionalContext': 'Act as Sarthi. Load ~/.claude/skills/sarthi/SKILL.md and follow it exactly, including the Session Onboarding block: detect tools silently, auto-setup graphify if needed, then present the welcome prompt listing active tools and asking the user if they want to skip any before routing.'}}))\" "
       }]
     }]
   }
@@ -229,7 +243,7 @@ Sarthi works even with zero additional tools installed. When no specialized tool
 
 ## Extending Sarthi
 
-Sarthi's routing rules are plain markdown in `SKILL.md`. To add routing for a new tool:
+Sarthi's routing rules are plain markdown in `skills/sarthi/SKILL.md`. To add routing for a new tool:
 
 1. Add a new section under **Step 2: Route by Intent**
 2. Add a row to the detection table with signal words

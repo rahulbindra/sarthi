@@ -30,7 +30,7 @@ Launch one sub-agent per domain in parallel. Each agent must:
 2. Return a structured result: `{ domain, status: pass|warn|fail, findings: [...] }`
 3. Keep findings actionable — file path + line number + description where possible
 
-Use `subagent_type: "compound-engineering:ce-correctness-reviewer"` for engineering. Use `subagent_type: "Explore"` for all others.
+Use `subagent_type: "compound-engineering:ce-correctness-reviewer"` for engineering. Use `subagent_type: "Explore"` for all others. Both are valid Claude Code SDK subagent types.
 
 ---
 

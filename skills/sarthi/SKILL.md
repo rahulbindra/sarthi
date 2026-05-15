@@ -17,7 +17,7 @@ Before the user sends their first message, do the following silently and then pr
 
 **1b. Check codeburn audit cadence** (if codeburn detected):
 ```bash
-[ -f ~/.claude/.sarthi-codeburn-ts ] && python3 -c "import os,time; exit(0 if time.time()-os.path.getmtime(os.path.expanduser('~/.claude/.sarthi-codeburn-ts'))>259200 else 1)" 2>/dev/null && echo "codeburn:due" || echo "codeburn:recent"
+([ ! -f ~/.claude/.sarthi-codeburn-ts ] || python3 -c "import os,time; exit(0 if time.time()-os.path.getmtime(os.path.expanduser('~/.claude/.sarthi-codeburn-ts'))>259200 else 1)" 2>/dev/null) && echo "codeburn:due" || echo "codeburn:recent"
 ```
 If `codeburn:due` (or timestamp file doesn't exist) — add this line to the onboarding prompt:
 ```
@@ -26,7 +26,7 @@ If `codeburn:due` (or timestamp file doesn't exist) — add this line to the onb
 
 **1c. Check weekly project audit cadence:**
 ```bash
-[ -f ~/.claude/.sarthi-audit-ts ] && python3 -c "import os,time; exit(0 if time.time()-os.path.getmtime(os.path.expanduser('~/.claude/.sarthi-audit-ts'))>604800 else 1)" 2>/dev/null && echo "audit:due" || echo "audit:recent"
+([ ! -f ~/.claude/.sarthi-audit-ts ] || python3 -c "import os,time; exit(0 if time.time()-os.path.getmtime(os.path.expanduser('~/.claude/.sarthi-audit-ts'))>604800 else 1)" 2>/dev/null) && echo "audit:due" || echo "audit:recent"
 ```
 If `audit:due` (or timestamp file doesn't exist) — add this line to the onboarding prompt:
 ```
@@ -79,7 +79,7 @@ command -v codeburn > /dev/null && echo "codeburn:yes" || echo "codeburn:no"
 jq -e '.mcpServers["morph-mcp"]' ~/.claude.json > /dev/null 2>&1 && echo "morph:yes" || echo "morph:no"
 ```
 
-Also check the skills list for: `ce-work` (compound-engineering), `firecrawl-search` (firecrawl), `codex` (codex plugin), `revise-claude-md` (claude-md-management).
+Also check the skills list for: `ce-work` (compound-engineering), `firecrawl-search` (firecrawl), `codex` (codex plugin), `revise-claude-md` (claude-md-management), `dispatching-parallel-agents` (superpowers).
 
 Build a mental map of what's available. **Only route to tools that exist.**
 
@@ -273,12 +273,14 @@ Specific domains can be targeted: `sarthi audit security`, `sarthi audit keys`, 
 
 ## Step 3: Cost Guard (every task)
 
-Before starting **any** task, check five things:
+Before starting **any** task, check six things:
 
 **1. Deliverable named?**
 If the user's message doesn't state a concrete outcome, ask:
 > "What's the one-sentence result of this task?"
 Don't proceed until answered.
+
+Skip this check for: informational questions ("how does X work", "where is X", "what is X"), cost/spend queries, codebase navigation requests, and research/lookup requests. Apply only when the task involves writing or modifying code or files.
 
 **2. Graphify available?**
 If `graphify-out/graph.json` exists — always `graphify query` before reading or grepping. Never grep first.

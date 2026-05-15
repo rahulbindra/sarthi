@@ -125,6 +125,10 @@ Your choice (y/s):
 
 If the user chooses **y**:
 - Ask: "Paste your Morph API key (get one at morphllm.com):"
+- Ensure `~/.claude.json` exists before writing:
+```bash
+[ -f ~/.claude.json ] || echo '{"mcpServers":{}}' > ~/.claude.json
+```
 - Add the MCP server entry to `~/.claude.json` using jq:
 ```bash
 jq '.mcpServers["morph-mcp"] = {
@@ -143,119 +147,82 @@ If the user chooses **s**:
 - Show: "Skipped. Get a Morph API key at morphllm.com and re-run /sarthi-setup to add it."
 - Continue to next step.
 
-### Step 6 — Enable prompt optimizer (opt-in)
+### Step 6 — Enable Sarthi advisors (opt-in)
 
-Check if already enabled:
+Check which are already enabled:
 ```bash
-[ -f ~/.claude/.sarthi-prompt-optimizer-enabled ] && echo "enabled" || echo "disabled"
+[ -f ~/.claude/.sarthi-prompt-optimizer-enabled ] && echo "optimizer:on" || echo "optimizer:off"
+[ -f ~/.claude/.sarthi-session-monitor-enabled ] && echo "monitor:on" || echo "monitor:off"
+[ -f ~/.claude/.sarthi-model-advisor-enabled ] && echo "advisor:on" || echo "advisor:off"
 ```
 
-If already enabled, skip this step silently.
+If all three are already enabled, skip this step silently.
 
-If NOT enabled, ask the user:
+If any are not enabled, ask:
 
 ```
-Prompt optimizer — before routing each task, Sarthi can assess your prompt for
-token-inefficiency signals (vague asks, missing deliverables, scope creep, etc.)
-and suggest a tighter reword. It learns from whether you accept or reject suggestions.
+Sarthi includes three optional advisors — each is non-blocking and can be turned off individually:
 
-Off by default. Enable it?
-  [y] Yes — enable prompt optimizer
-  [s] Skip — keep it off (you can enable later with /sarthi-prompt-optimizer)
+  Prompt optimizer  — detects vague asks, missing deliverables, scope creep; suggests a tighter reword
+  Session monitor   — warns at ~90% and ~100% context fill (twice per session, never more)
+  Model advisor     — suggests Haiku / Sonnet / Opus based on task complexity
 
-Your choice (y/s):
+  [y] Enable all three
+  [n] Skip all
+  [c] Choose individually
+
+Your choice (y/n/c):
 ```
 
-If the user chooses **y**:
+**If [y] — enable all:**
 ```bash
 touch ~/.claude/.sarthi-prompt-optimizer-enabled
-```
-- Confirm: "Prompt optimizer enabled. It will suggest rewording when it detects 2+ inefficiency signals. Rejects twice in a row → silent for the session."
-
-If the user chooses **s**:
-- Show: "Skipped. Enable any time by running `/sarthi-prompt-optimizer` and choosing 'enable'."
-- Continue to next step.
-
-### Step 7 — Enable session monitor (opt-in)
-
-Check if already enabled:
-```bash
-[ -f ~/.claude/.sarthi-session-monitor-enabled ] && echo "enabled" || echo "disabled"
-```
-
-If already enabled, skip this step silently.
-
-If NOT enabled, ask the user:
-
-```
-Session monitor — warns you when your session is approaching its context limit,
-before Claude's reasoning quality degrades.
-
-  At 90%: suggests /compact or a new session (once)
-  At 100%: recommends starting fresh (once)
-  Never interrupts more than twice per session.
-
-Enable it?
-  [y] Yes — enable session monitor
-  [s] Skip — keep it off
-
-Your choice (y/s):
-```
-
-If the user chooses **y**:
-```bash
 touch ~/.claude/.sarthi-session-monitor-enabled
-```
-Confirm: "Session monitor enabled. You'll get one nudge at ~90% and one at 100% context fill."
-
-If the user chooses **s**:
-- Show: "Skipped. Enable any time: `touch ~/.claude/.sarthi-session-monitor-enabled`"
-
-### Step 8 — Enable model advisor (opt-in)
-
-Check if already enabled:
-```bash
-[ -f ~/.claude/.sarthi-model-advisor-enabled ] && echo "enabled" || echo "disabled"
-```
-
-If already enabled, skip this step silently.
-
-If NOT enabled, ask the user:
-
-```
-Model advisor — before each task, assesses complexity and suggests the most
-token-efficient Claude model (Haiku / Sonnet / Opus). Learns from your responses.
-
-  Simple tasks  → suggests Haiku  (fastest, cheapest)
-  Standard tasks → suggests Sonnet (default)
-  Complex tasks  → suggests Opus   (deepest reasoning)
-
-You can always skip a suggestion. Rejects twice → silent for the session.
-
-Enable it?
-  [y] Yes — enable model advisor
-  [s] Skip — keep it off
-
-Your choice (y/s):
-```
-
-If the user chooses **y**:
-```bash
 touch ~/.claude/.sarthi-model-advisor-enabled
 ```
-Confirm: "Model advisor enabled. It suggests a model switch when the task complexity warrants it."
+Confirm: "All three advisors enabled."
 
-If the user chooses **s**:
-- Show: "Skipped. Enable any time: `touch ~/.claude/.sarthi-model-advisor-enabled`"
+**If [n] — skip all:**
+Show: "Skipped. Enable individually any time:
+  `touch ~/.claude/.sarthi-prompt-optimizer-enabled`
+  `touch ~/.claude/.sarthi-session-monitor-enabled`
+  `touch ~/.claude/.sarthi-model-advisor-enabled`"
 
-### Step 9 — Install codeburn menubar
+**If [c] — choose individually:**
+For each advisor that is not already enabled, ask in sequence:
+
+*Prompt optimizer:*
+```
+Prompt optimizer — assesses prompts for inefficiency signals and suggests rewording.
+Learns from accept/reject decisions. Fires only when 2+ signals are present.
+  [y] Enable  [s] Skip
+```
+If y: `touch ~/.claude/.sarthi-prompt-optimizer-enabled`
+
+*Session monitor:*
+```
+Session monitor — warns at ~90% context (suggests /compact) and ~100% (recommends fresh session).
+Fires at most twice per session.
+  [y] Enable  [s] Skip
+```
+If y: `touch ~/.claude/.sarthi-session-monitor-enabled`
+
+*Model advisor:*
+```
+Model advisor — before each task, suggests Haiku / Sonnet / Opus based on complexity.
+Learns from your choices. Rejects twice → silent for the session.
+  [y] Enable  [s] Skip
+```
+If y: `touch ~/.claude/.sarthi-model-advisor-enabled`
+
+### Step 7 — Install codeburn menubar
 
 If codeburn is installed and menubar is not already running:
 ```bash
 codeburn menubar &
 ```
 
-### Step 10 — Confirm to the user
+### Step 8 — Confirm to the user
 
 After completing the above, report clearly what was done and what was skipped (already configured). Use this format:
 
@@ -280,12 +247,10 @@ If the user skipped the API key step, show `— skipped (set manually later)`.
 If ANTHROPIC_API_KEY was already in their profile, show `— already configured`.
 If the user skipped Morph, show `— skipped (morphllm.com to set up later)`.
 If Morph was already configured, show `— already configured`.
-If the user skipped prompt optimizer, show `— skipped (run /sarthi-prompt-optimizer to enable later)`.
-If prompt optimizer was already enabled, show `— already enabled`.
-If the user skipped session monitor, show `— skipped (touch ~/.claude/.sarthi-session-monitor-enabled to enable)`.
-If session monitor was already enabled, show `— already enabled`.
-If the user skipped model advisor, show `— skipped (touch ~/.claude/.sarthi-model-advisor-enabled to enable)`.
-If model advisor was already enabled, show `— already enabled`.
+For each advisor (prompt optimizer, session monitor, model advisor):
+- If enabled in this run, show `— enabled`
+- If already enabled before setup, show `— already enabled`
+- If skipped, show `— skipped (touch ~/.claude/.<flag-file> to enable)`
 
 ### Important
 

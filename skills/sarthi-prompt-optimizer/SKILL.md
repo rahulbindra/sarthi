@@ -24,7 +24,7 @@ If enabled, load learnings:
 cat ~/.claude/.sarthi-prompt-learnings.json 2>/dev/null || echo "{}"
 ```
 
-Check session suppression counter from learnings. If `session_consecutive_rejects >= 2`, skip for this session and exit silently.
+After loading, **reset `session_consecutive_rejects` to 0** in-memory — this counter is per-session only and must not carry forward from previous sessions. Pattern preferences (`patterns.*`) and totals are persisted across sessions; session state is not.
 
 ---
 
@@ -162,7 +162,7 @@ Clear `session_consecutive_rejects` and re-enable suggestions for this session.
 ```bash
 rm ~/.claude/.sarthi-prompt-optimizer-enabled
 ```
-Confirm: "Prompt optimizer disabled. Run /sarthi-setup to re-enable."
+Confirm: "Prompt optimizer disabled. Re-enable any time: `touch ~/.claude/.sarthi-prompt-optimizer-enabled`"
 
 **`/sarthi-prompt-optimizer clear`**
 ```bash

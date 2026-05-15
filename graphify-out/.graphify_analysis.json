@@ -1,0 +1,174 @@
+{
+  "communities": {
+    "0": [
+      "docs_intent_detection",
+      "docs_sarthi_docs",
+      "docs_tool_routing_reference",
+      "readme_cost_guard",
+      "readme_frontend_design",
+      "readme_routing_layer",
+      "readme_sarthi",
+      "readme_skill_creator",
+      "readme_superpowers"
+    ],
+    "1": [
+      "ai_workflow_ai_workflow_md",
+      "api_patterns_api_patterns_md",
+      "architecture_architecture_md",
+      "claude_md_claude_md",
+      "current_sprint_current_sprint_md",
+      "design_system_design_system_md",
+      "implementation_patterns_implementation_patterns_md",
+      "placement_placement_guide",
+      "product_principles_product_principles_md"
+    ],
+    "2": [
+      "docs_auto_activation",
+      "readme_posttooluse_hook",
+      "readme_session_start_hook",
+      "skill_sarthi_setup",
+      "skill_setup_anthropic_api_key",
+      "skill_setup_posttooluse_hook",
+      "skill_setup_sessionstart_hook"
+    ],
+    "3": [
+      "readme_claude_md_management",
+      "readme_compound_engineering",
+      "readme_firecrawl",
+      "skill_intent_routing",
+      "skill_tool_detection"
+    ],
+    "4": [
+      "readme_codex",
+      "readme_morph",
+      "skill_cost_guard",
+      "skill_sarthi"
+    ],
+    "5": [
+      "readme_codeburn",
+      "readme_graphify",
+      "skill_session_onboarding"
+    ]
+  },
+  "cohesion": {
+    "0": 0.33,
+    "1": 0.42,
+    "2": 0.29,
+    "3": 0.6,
+    "4": 0.83,
+    "5": 0.67
+  },
+  "gods": [
+    {
+      "id": "readme_sarthi",
+      "label": "Sarthi Plugin",
+      "degree": 17
+    },
+    {
+      "id": "skill_sarthi",
+      "label": "Sarthi Skill",
+      "degree": 17
+    },
+    {
+      "id": "docs_sarthi_docs",
+      "label": "Sarthi Full Documentation",
+      "degree": 14
+    },
+    {
+      "id": "skill_intent_routing",
+      "label": "Intent Routing Step",
+      "degree": 9
+    },
+    {
+      "id": "readme_graphify",
+      "label": "Graphify",
+      "degree": 8
+    },
+    {
+      "id": "placement_placement_guide",
+      "label": "Placement and Usage Guide",
+      "degree": 8
+    },
+    {
+      "id": "claude_md_claude_md",
+      "label": "CLAUDE.md Template",
+      "degree": 8
+    },
+    {
+      "id": "skill_tool_detection",
+      "label": "Tool Detection Step",
+      "degree": 8
+    },
+    {
+      "id": "readme_codeburn",
+      "label": "Codeburn",
+      "degree": 7
+    },
+    {
+      "id": "skill_sarthi_setup",
+      "label": "Sarthi Setup Skill",
+      "degree": 7
+    }
+  ],
+  "surprises": [
+    {
+      "source": "Sarthi Skill",
+      "target": "Frontend Design Plugin",
+      "source_files": [
+        "skills/sarthi/SKILL.md",
+        "README.md"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "why": "connects across different repos/directories; bridges separate communities; peripheral node `Frontend Design Plugin` unexpectedly reaches hub `Sarthi Skill`"
+    },
+    {
+      "source": "Sarthi Plugin",
+      "target": "Sarthi Skill",
+      "source_files": [
+        "README.md",
+        "skills/sarthi/SKILL.md"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "why": "connects across different repos/directories; bridges separate communities"
+    },
+    {
+      "source": "Sarthi Plugin",
+      "target": "Sarthi Setup Skill",
+      "source_files": [
+        "README.md",
+        "skills/sarthi-setup/SKILL.md"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "why": "connects across different repos/directories; bridges separate communities"
+    },
+    {
+      "source": "Sarthi Full Documentation",
+      "target": "Compound Engineering Plugin",
+      "source_files": [
+        "DOCS.md",
+        "README.md"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "why": "connects across different repos/directories; bridges separate communities"
+    },
+    {
+      "source": "Sarthi Skill",
+      "target": "Compound Engineering Plugin",
+      "source_files": [
+        "skills/sarthi/SKILL.md",
+        "README.md"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "why": "connects across different repos/directories; bridges separate communities"
+    }
+  ],
+  "tokens": {
+    "input": 18717,
+    "output": 12673
+  }
+}
