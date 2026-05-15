@@ -423,13 +423,19 @@ Skip this check for: informational questions ("how does X work", "where is X", "
 Before editing any file, read it first. Before modifying a function, grep for all callers. Research before you edit. Never write to a file you haven't read in this session.
 
 **3. Graphify available?**
-If `graphify-out/graph.json` exists — always `graphify query` before reading or grepping. Never grep first.
+Run this check before reading any file or running any grep:
+```bash
+[ -f graphify-out/graph.json ] && echo "graph:exists" || echo "graph:none"
+```
+If `graph:exists` — the next step is `graphify query "..."`. Do not read files or grep first. No exceptions.
 
 **4. Morph available?**
-If `morph:yes` and the task touches 3 or more files — announce it and switch tools:
+If `morph:yes` and the task touches 3 or more files — the first file change in the task MUST use `mcp__morph-mcp__edit_file`. Announce once:
 > "Morph is active — using `mcp__morph-mcp__edit_file` for all edits in this task."
 
-Then use `mcp__morph-mcp__edit_file` instead of the native `Edit` tool for every file change in this task. Do not mix Edit and Morph in the same task.
+Use `mcp__morph-mcp__edit_file` for every file change in this task. Do not mix Edit and Morph in the same task.
+
+**Critical failure mode to avoid:** Announcing Morph and then using the native Edit tool anyway is the worst outcome — it gives false assurance while ignoring the rule entirely. If you find yourself reaching for Edit on a 3+ file task, stop and switch to `mcp__morph-mcp__edit_file` before making any change.
 
 **5. Better for Codex?**
 If the task is primarily investigation or review and Codex is installed:
