@@ -236,6 +236,28 @@ If enabled — invoke `sarthi-model-advisor`. It scores task complexity and sugg
 | firecrawl | `/firecrawl-search` or `/firecrawl-scrape` |
 | vanilla Claude | WebFetch on provided URLs |
 
+### Git Audit / Review
+**Signal:** "audit git", "review git", "git audit", "git review", "git health", "check git", "git status report", "review the git", "audit the git"
+
+When triggered, present this menu:
+
+```
+Git audit — pick a category (or describe what you want):
+
+  [1] Commit quality     — message conventions, scope, frequency
+  [2] Branch health      — stale branches, unmerged, naming
+  [3] PR status          — open PRs, draft PRs, review lag
+  [4] Security           — exposed secrets, sensitive files in history
+  [5] Code churn         — hot spots, high-edit files
+  [6] Contributor activity — who's active, bus factor
+  [7] Release hygiene    — version tags, release notes, changelog
+  [8] All of the above
+```
+
+Run the selected audit using `gh`, `git log`, `git branch`, and `grep` as appropriate.
+
+If the user requests a category **not in this list** — run it as best you can, then log it to `~/.claude/.sarthi-intent-log.jsonl` with `routed_to: "git-audit-unknown"` so sarthi-learn can propose adding it to the menu in future.
+
 ### Project Audit
 **Signal:** "sarthi audit", "run audit", "audit my project", "security audit", "privacy audit", "vulnerability audit", "check for keys", "check for secrets", "ethical hacker audit", "legal audit", "usability audit", "attribution audit"
 
