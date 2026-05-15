@@ -164,7 +164,7 @@ When Sarthi routes any diagram creation or edit task, enforce these rules before
 
 **2. Diagrams are outputs, not editable artifacts** — a rendered PNG/JPG is never the right thing to edit. The source (`.mmd`, `.fig`, `.svg`, `.drawio`, etc.) is. Pixel manipulation of a rasterized diagram is always the wrong approach.
 
-**3. Save source + output together** — when generating any diagram, always produce and save both the source file and the rendered output side by side. Warn the user if only the output exists.
+**3. Always save .mmd (mandatory)** — any task that generates a diagram MUST save the Mermaid source as `<name>.mmd` alongside the rendered output before the task is complete. This is a hard requirement, not a reminder. If the diagram is not Mermaid, save the equivalent source file (`.svg`, `.drawio`, etc.). Do not report done until both files exist on disk.
 
 **4. Regenerate, don't patch** — any content change to a diagram means: update source → re-render. Never insert, erase, or move pixels to simulate a diagram change.
 
@@ -599,10 +599,13 @@ If an element was renamed, update any comments referencing the old name.
 **7. Canvas boundary check**
 Verify that no element extends beyond the SVG `width` or `height`. Check the rightmost `x + width` and the bottommost `y + height` across all elements.
 
-**8. Export succeeds cleanly**
+**8. Source file saved**
+Confirm that the `.mmd` (or equivalent source) file exists on disk alongside the rendered output. If it does not exist, save it now before proceeding. Task is not complete without it.
+
+**9. Export succeeds cleanly**
 For SVG→PNG: run `rsvg-convert` and confirm it exits without error before reporting done.
 
-**9. Visual verify via preview panel**
+**10. Visual verify via preview panel**
 The PostToolUse hook surfaces every Write/Edit to the preview panel. Look at the preview and confirm the render matches intent before saying "done". If the preview is unavailable, explicitly note that visual verification was skipped.
 
 ---
