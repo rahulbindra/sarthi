@@ -423,6 +423,39 @@ echo "{\"ts\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",\"routed_to\":\"unrouted\"}" >>
 
 ---
 
+## Step 5: Artifact Delivery Audit (visual artifacts only)
+
+Before saying "done" on any SVG, diagram, image, or other visual artifact, run this checklist. Do not report completion until all checks pass.
+
+**1. Text fits inside boxes**
+For every text element: estimate text width (chars × ~6px for font-size 13–14, ~5.5px for font-size 10–11, ~4.5px for font-size 9). Compare against the containing rect's width minus 8px padding each side. If it overflows, shorten the text or reduce font-size.
+
+**2. No child box overflows its parent container**
+For every sub-box: check that `child_x + child_width ≤ parent_x + parent_width` and `child_y + child_height ≤ parent_y + parent_height`.
+
+**3. No excess blank space**
+For every container box: the bottom of its last child element should be within ~20px of the container's bottom edge. If there is more blank space, shrink the container height.
+
+**4. Cascade consistency**
+If any box was resized or repositioned, verify all elements below it have been shifted accordingly. Check every y-coordinate that references the moved box.
+
+**5. Connector lines are accurate**
+After any repositioning, verify connector lines still point to the correct elements. Check that line endpoints fall within or adjacent to their target boxes.
+
+**6. No stale comments or labels**
+If an element was renamed, update any comments referencing the old name.
+
+**7. Canvas boundary check**
+Verify that no element extends beyond the SVG `width` or `height`. Check the rightmost `x + width` and the bottommost `y + height` across all elements.
+
+**8. Export succeeds cleanly**
+For SVG→PNG: run `rsvg-convert` and confirm it exits without error before reporting done.
+
+**9. Visual verify via preview panel**
+The PostToolUse hook surfaces every Write/Edit to the preview panel. Look at the preview and confirm the render matches intent before saying "done". If the preview is unavailable, explicitly note that visual verification was skipped.
+
+---
+
 ## sarthi-learn
 
 **Trigger:** "sarthi learn", "sarthi missed", "you should have used", "why didn't you use", "review intent log"
