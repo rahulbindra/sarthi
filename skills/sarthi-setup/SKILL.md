@@ -15,6 +15,8 @@ Run this skill once after installing Sarthi. It configures everything automatica
 4. Optionally sets `ANTHROPIC_API_KEY` in your shell profile (needed for graphify; skippable)
 5. Optionally configures the Morph MCP server in `~/.claude.json` (enables fast bulk edits; skippable)
 6. Optionally enables the prompt optimizer (opt-in; suggests token-efficient rewording before routing)
+7. Optionally enables the session monitor (opt-in; warns at 90% and 100% context fill, twice per session)
+8. Optionally enables the model advisor (opt-in; suggests Haiku/Sonnet/Opus based on task complexity)
 
 ## Steps
 
@@ -174,14 +176,86 @@ If the user chooses **s**:
 - Show: "Skipped. Enable any time by running `/sarthi-prompt-optimizer` and choosing 'enable'."
 - Continue to next step.
 
-### Step 7 — Install codeburn menubar
+### Step 7 — Enable session monitor (opt-in)
+
+Check if already enabled:
+```bash
+[ -f ~/.claude/.sarthi-session-monitor-enabled ] && echo "enabled" || echo "disabled"
+```
+
+If already enabled, skip this step silently.
+
+If NOT enabled, ask the user:
+
+```
+Session monitor — warns you when your session is approaching its context limit,
+before Claude's reasoning quality degrades.
+
+  At 90%: suggests /compact or a new session (once)
+  At 100%: recommends starting fresh (once)
+  Never interrupts more than twice per session.
+
+Enable it?
+  [y] Yes — enable session monitor
+  [s] Skip — keep it off
+
+Your choice (y/s):
+```
+
+If the user chooses **y**:
+```bash
+touch ~/.claude/.sarthi-session-monitor-enabled
+```
+Confirm: "Session monitor enabled. You'll get one nudge at ~90% and one at 100% context fill."
+
+If the user chooses **s**:
+- Show: "Skipped. Enable any time: `touch ~/.claude/.sarthi-session-monitor-enabled`"
+
+### Step 8 — Enable model advisor (opt-in)
+
+Check if already enabled:
+```bash
+[ -f ~/.claude/.sarthi-model-advisor-enabled ] && echo "enabled" || echo "disabled"
+```
+
+If already enabled, skip this step silently.
+
+If NOT enabled, ask the user:
+
+```
+Model advisor — before each task, assesses complexity and suggests the most
+token-efficient Claude model (Haiku / Sonnet / Opus). Learns from your responses.
+
+  Simple tasks  → suggests Haiku  (fastest, cheapest)
+  Standard tasks → suggests Sonnet (default)
+  Complex tasks  → suggests Opus   (deepest reasoning)
+
+You can always skip a suggestion. Rejects twice → silent for the session.
+
+Enable it?
+  [y] Yes — enable model advisor
+  [s] Skip — keep it off
+
+Your choice (y/s):
+```
+
+If the user chooses **y**:
+```bash
+touch ~/.claude/.sarthi-model-advisor-enabled
+```
+Confirm: "Model advisor enabled. It suggests a model switch when the task complexity warrants it."
+
+If the user chooses **s**:
+- Show: "Skipped. Enable any time: `touch ~/.claude/.sarthi-model-advisor-enabled`"
+
+### Step 9 — Install codeburn menubar
 
 If codeburn is installed and menubar is not already running:
 ```bash
 codeburn menubar &
 ```
 
-### Step 8 — Confirm to the user
+### Step 10 — Confirm to the user
 
 After completing the above, report clearly what was done and what was skipped (already configured). Use this format:
 
@@ -193,6 +267,8 @@ Sarthi setup complete.
 ✓ ANTHROPIC_API_KEY     — added to ~/.zprofile
 ✓ Morph MCP             — configured in ~/.claude.json
 ✓ Prompt optimizer      — enabled
+✓ Session monitor       — enabled
+✓ Model advisor         — enabled
 ✓ codeburn menubar      — launched
 
 Restart Claude Code (or open a new session) for the hooks to take effect.
@@ -206,6 +282,10 @@ If the user skipped Morph, show `— skipped (morphllm.com to set up later)`.
 If Morph was already configured, show `— already configured`.
 If the user skipped prompt optimizer, show `— skipped (run /sarthi-prompt-optimizer to enable later)`.
 If prompt optimizer was already enabled, show `— already enabled`.
+If the user skipped session monitor, show `— skipped (touch ~/.claude/.sarthi-session-monitor-enabled to enable)`.
+If session monitor was already enabled, show `— already enabled`.
+If the user skipped model advisor, show `— skipped (touch ~/.claude/.sarthi-model-advisor-enabled to enable)`.
+If model advisor was already enabled, show `— already enabled`.
 
 ### Important
 

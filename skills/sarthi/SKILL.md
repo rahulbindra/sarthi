@@ -95,17 +95,27 @@ Do not announce these runs. Complete them before responding to the user's first 
 
 ---
 
-## Step 1b: Prompt Optimizer (if enabled)
+## Step 1b: Pre-routing checks (run in this order before every task)
 
-Before routing, check if the prompt optimizer is active:
+Run the following three checks in sequence. Each is independently opt-in and skips silently if not enabled. Routing always proceeds after all checks complete.
 
+**Check 1 — Session monitor:**
+```bash
+[ -f ~/.claude/.sarthi-session-monitor-enabled ] && echo "enabled" || echo "disabled"
+```
+If enabled — invoke `sarthi-session-monitor`. It checks estimated context fill and fires a non-blocking warning at 90% (once) and 100% (once) per session. Exits silently if below threshold or both marks already fired.
+
+**Check 2 — Prompt optimizer:**
 ```bash
 [ -f ~/.claude/.sarthi-prompt-optimizer-enabled ] && echo "enabled" || echo "disabled"
 ```
+If enabled — invoke `sarthi-prompt-optimizer`. It assesses the prompt for 2+ inefficiency signals and suggests a reword if found. Uses original prompt if user skips. Exits silently if no signals or session-suppressed.
 
-If enabled — invoke the `sarthi-prompt-optimizer` skill to assess the user's prompt. It will either suggest a reword and wait for a response, or pass through silently. Routing continues after the optimizer completes (with the original or accepted reword).
-
-If disabled — skip entirely and proceed to routing.
+**Check 3 — Model advisor:**
+```bash
+[ -f ~/.claude/.sarthi-model-advisor-enabled ] && echo "enabled" || echo "disabled"
+```
+If enabled — invoke `sarthi-model-advisor`. It scores task complexity and suggests a model switch if the current model is sub-optimal. The task always proceeds regardless of response. Exits silently if model is already appropriate or session-suppressed.
 
 ---
 

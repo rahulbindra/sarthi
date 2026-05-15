@@ -243,6 +243,58 @@ Before every task, Sarthi checks five things:
 4. **Better for Codex?** — Offers an independent parallel review rather than doing it inline
 5. **Retry guard** — Stops after two failed attempts and prompts reconsideration
 
+## 📏 Session Monitor (opt-in)
+
+Watches your context fill and nudges you **twice per session** — before Claude's reasoning quality degrades.
+
+Enable during `/sarthi-setup` or: `touch ~/.claude/.sarthi-session-monitor-enabled`
+
+| Mark | Threshold | What it shows |
+|------|-----------|---------------|
+| First nudge | ~90% context | Suggests `/compact` to compress history in place, or a new session |
+| Final nudge | ~100% context | Recommends a fresh session, with a clean handoff checklist |
+
+Both nudges are **non-blocking** — the current task proceeds regardless. Neither fires more than once. Once both have fired, Sarthi goes silent for the rest of the session.
+
+Context fill is measured via codeburn if installed, otherwise estimated from conversation depth. On estimation, thresholds are slightly conservative (80% / 95%) to account for imprecision.
+
+---
+
+## 🤖 Model Advisor (opt-in)
+
+Before each task, assesses complexity and suggests the most token-efficient Claude model. Learns from your accept/reject decisions over time.
+
+Enable during `/sarthi-setup` or: `touch ~/.claude/.sarthi-model-advisor-enabled`
+
+| Complexity | Suggested model | Typical tasks |
+|------------|----------------|---------------|
+| Simple | Haiku 4.5 | Single-file edits, typos, lookups, renames, boilerplate |
+| Medium | Sonnet 4.6 | Multi-file features, debugging, tests, code review |
+| Complex | Opus 4.7 | Architecture, cross-system debugging, PM planning, audits |
+
+A suggestion only appears when your **current model is sub-optimal** for the task — e.g. using Opus for a typo fix, or Haiku for an architecture decision. If you're already on the right model, it stays silent.
+
+Since Claude Code model switching requires a user action, Sarthi tells you the exact `/model <id>` command to run — it can't switch automatically.
+
+**How it looks:**
+```
+🤖 Model suggestion:
+
+Task complexity: simple
+Current model:   Opus 4.7
+Suggested model: Haiku 4.5 — single-file rename, no reasoning depth needed
+
+To switch: /model claude-haiku-4-5-20251001
+
+[y] Note taken — I'll switch  [s] Skip  [r] Skip — tell me why
+```
+
+Same learning loop as the prompt optimizer — accepts/rejects saved to `~/.claude/.sarthi-model-learnings.json`. Two consecutive rejects → silent for the session.
+
+Commands: `/sarthi-model-advisor status`, `reset`, `off`, `clear`
+
+---
+
 ## ✏️ Prompt Optimizer (opt-in)
 
 Before routing any task, Sarthi can assess your prompt for token-inefficiency signals and suggest a tighter reword — reducing clarifying round trips and wasted work.
