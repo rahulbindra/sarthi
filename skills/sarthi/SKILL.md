@@ -24,6 +24,15 @@ If `codeburn:due` (or timestamp file doesn't exist) — add this line to the onb
 ⚠️  Codeburn audit due — last review was 3+ days ago. Type "codeburn audit" to run it now.
 ```
 
+**1c. Check weekly project audit cadence:**
+```bash
+[ -f ~/.claude/.sarthi-audit-ts ] && python3 -c "import os,time; exit(0 if time.time()-os.path.getmtime(os.path.expanduser('~/.claude/.sarthi-audit-ts'))>604800 else 1)" 2>/dev/null && echo "audit:due" || echo "audit:recent"
+```
+If `audit:due` (or timestamp file doesn't exist) — add this line to the onboarding prompt:
+```
+⚠️  Weekly project audit due. Type "sarthi audit" to run security, privacy, vulnerability, engineering, attribution, usability, legal, ethical hacker, and keys/PII checks.
+```
+
 **2. Auto-setup graphify** (if CLI present):
 - No graph → run `graphify extract .` silently in background
 - Graph exists → run `graphify update .` silently
@@ -184,6 +193,15 @@ Do not announce these runs. Complete them before responding to the user's first 
 |-----------|-------|
 | firecrawl | `/firecrawl-search` or `/firecrawl-scrape` |
 | vanilla Claude | WebFetch on provided URLs |
+
+### Project Audit
+**Signal:** "sarthi audit", "run audit", "audit my project", "security audit", "privacy audit", "vulnerability audit", "check for keys", "check for secrets", "ethical hacker audit", "legal audit", "usability audit", "attribution audit"
+
+| Available | Route |
+|-----------|-------|
+| always | `/sarthi-audit` — dispatches parallel agents for all requested domains |
+
+Specific domains can be targeted: `sarthi audit security`, `sarthi audit keys`, etc.
 
 ### Cost / Spend
 **Signal:** "how much", "cost", "spend", "tokens", "optimize usage", "codeburn audit"

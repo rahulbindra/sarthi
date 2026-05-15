@@ -254,6 +254,35 @@ Sarthi tracks when you last reviewed your token spend. Every session start, it c
 
 You can ignore the nudge and start working — it won't interrupt your session. The timestamp is stored locally in `~/.claude/.sarthi-codeburn-ts`.
 
+## 🔍 Weekly Project Audit
+
+Sarthi prompts you once a week to run a multi-domain audit across your project. At session start, it checks whether an audit is due:
+
+```
+⚠️  Weekly project audit due. Type "sarthi audit" to run security, privacy, vulnerability,
+    engineering, attribution, usability, legal, ethical hacker, and keys/PII checks.
+```
+
+Running `sarthi audit` dispatches **9 parallel sub-agents**, one per domain:
+
+| Domain | What it checks |
+|--------|---------------|
+| **Security** | OWASP Top 10 — injection, broken auth, XSS, CSRF, missing input validation |
+| **Privacy** | PII collection, data retention, third-party exfiltration, GDPR/CCPA gaps |
+| **Vulnerability** | Dependency CVEs (`npm audit`, `pip-audit`), outdated packages, deprecated APIs |
+| **Engineering** | Logic errors, N+1 queries, missing error handling, dead code, test coverage gaps |
+| **Fair Attribution** | Copied code without credit, license incompatibilities, missing copyright headers |
+| **Usability** | Missing ARIA labels, keyboard nav, alt text, error message quality, empty states |
+| **Legal** | License compliance, copyleft contamination, missing privacy policy, export controls |
+| **Ethical Hacker** | Injection vectors (SQLi, SSTI, XXE, log injection), information extraction points (verbose errors, open introspection, permissive CORS, over-fetching) |
+| **Keys & PII** | Hardcoded API keys, tokens, private keys, SSNs, credit card numbers, `.env` files committed to git |
+
+Each domain returns `pass / warn / fail` with file paths and line numbers. The report is aggregated into a single summary.
+
+You can target a specific domain: `sarthi audit keys`, `sarthi audit security`, etc.
+
+The weekly clock resets after each audit. Timestamp stored in `~/.claude/.sarthi-audit-ts`.
+
 ## 📁 Best Practices Templates
 
 The [`best-practices/`](best-practices/) folder contains 9 governance templates for running Claude Code efficiently on any project:
