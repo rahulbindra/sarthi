@@ -1,7 +1,7 @@
 ---
 name: sarthi-pm
-description: Guided product management flow for turning ideas into implementation-ready briefs. Use when the user has an idea, wants to design an app, plan a product, or think through features before building. Produces design principles, a design overview, SMART objectives, sprint breakdown, and a /goal-ready output. Triggers on "I have an idea", "help me design", "I want to build X", "product planning", "think through this with me", "design an app", "feature planning", "startup idea".
-argument-hint: "[optional: describe your idea to skip the opening question]"
+description: Guided product management flow for turning ideas into implementation-ready briefs, and for planning upcoming sprints. Use when the user has an idea, wants to design an app, plan a product, or think through features before building. Also use when the user wants to plan next sprint(s), update sprint goals, or advance through a sprint breakdown. Produces design principles, a design overview, SMART objectives, sprint breakdown, and a /goal-ready output per sprint. Triggers on "I have an idea", "help me design", "I want to build X", "product planning", "think through this with me", "design an app", "feature planning", "startup idea", "plan next sprint", "sprint planning", "update sprint goal", "plan sprints".
+argument-hint: "[optional: describe your idea or say 'plan next sprint' to go straight to sprint planning]"
 ---
 
 # Sarthi PM Flow
@@ -29,9 +29,12 @@ Use `AskUserQuestion` (call `ToolSearch` with `select:AskUserQuestion` first to 
 ```
 
 If a brief exists, ask:
-> "A product brief already exists at `docs/pm/PRODUCT_BRIEF.md`. Do you want to update it or start fresh?"
-> - Update existing brief
-> - Start fresh
+> "A product brief already exists at `docs/pm/PRODUCT_BRIEF.md`. What would you like to do?"
+> - Plan next sprint(s) — advance the sprint breakdown and get a /goal statement
+> - Update the brief — revise problem, objectives, or scope
+> - Start fresh — new product, new brief
+
+**If the user chooses "Plan next sprint(s)"** — jump directly to the Sprint Planning Flow below. Skip Phases 1–6 entirely.
 
 If updating: read the existing file, use it as context, and skip questions the file already answers clearly. Only ask about gaps or changed areas.
 
@@ -246,7 +249,123 @@ Your /goal statement (copy and run in Claude Code):
 
 Paste this into Claude Code at the start of any session to keep Claude
 anchored to your product context, sprint goal, and SMART objectives.
-Update the "Current sprint goal" line as you advance through sprints.
+Run /sarthi-pm and choose "Plan next sprint(s)" when you're ready to advance.
+```
+
+---
+
+## Sprint Planning Flow
+
+*Triggered when the user says "plan next sprint", "sprint planning", "update sprint goal", "plan sprints", or chooses "Plan next sprint(s)" at Phase 0.*
+
+This flow reads the existing product brief, identifies where you are in the sprint breakdown, and guides you through planning the next 1–N sprints. It produces a `/goal`-ready block for the sprint you are about to start.
+
+---
+
+### SP Phase 1 — Read context from existing brief
+
+```bash
+cat docs/pm/PRODUCT_BRIEF.md 2>/dev/null || echo "no-brief"
+```
+
+If no brief exists:
+> "No product brief found at `docs/pm/PRODUCT_BRIEF.md`. Run `/sarthi-pm` first to create one, then come back for sprint planning."
+Exit.
+
+If brief exists, extract:
+- Product name and one-line problem statement
+- Sprint breakdown (all sprints with their goals and completion status)
+- SMART objectives
+- Current sprint (infer from checked-off deliverables or "Current sprint goal" in the /goal block)
+
+Identify the **next sprint to plan** — the first sprint in the breakdown with no goal or unchecked deliverables and no explicit start.
+
+---
+
+### SP Phase 2 — Confirm sprint position and scope
+
+Use `AskUserQuestion` to ask:
+
+> "Based on your brief, the next sprint to plan appears to be **[Sprint N — Name]**. How many sprints would you like to plan in this session?"
+
+Options:
+- Just the next sprint (Sprint N)
+- Next 2 sprints
+- Next 3 sprints
+- Let me choose a different sprint
+
+Wait for the answer. Adjust the sprint range accordingly.
+
+---
+
+### SP Phase 3 — Interview for each sprint
+
+For each sprint being planned, ask the following one at a time using `AskUserQuestion`:
+
+**Goal question:**
+> "What is the single-sentence goal for [Sprint N]? What should someone be able to do or see at the end of this sprint that they couldn't before?"
+
+Push back if the goal is too vague or covers too much. A good sprint goal fits in one sentence and is testable.
+
+**Deliverables question:**
+> "What are the 3–5 key deliverables for [Sprint N]? List the concrete outputs, not the work tasks."
+
+**End date question:**
+> "When does [Sprint N] end? Give me an absolute date (e.g. 2026-06-30)."
+
+**Blockers question:**
+> "Any known blockers, dependencies, or risks for [Sprint N]? (Press enter to skip)"
+
+Repeat for each sprint in the planned range.
+
+---
+
+### SP Phase 4 — Update PRODUCT_BRIEF.md
+
+Update the Sprint Breakdown section of `docs/pm/PRODUCT_BRIEF.md` with the newly planned sprints. Use this format for each:
+
+```
+Sprint N — [Name] (ends [date])
+  Goal: [One sentence]
+  Deliverables:
+    - [ ] [Deliverable 1]
+    - [ ] [Deliverable 2]
+    - [ ] [Deliverable 3]
+  Blockers: [Any flagged, or "None"]
+  Definition of done: [A real user can / [specific testable condition]]
+```
+
+Also update the `/goal Statement` section in the brief — set "Current sprint goal" to the goal of the first sprint being started now.
+
+Update the `Last updated` date at the top of the file.
+
+---
+
+### SP Phase 5 — Present /goal output per sprint
+
+Present the /goal block for the sprint the user is about to start (the first one planned):
+
+```
+Sprint [N] planned and brief updated.
+
+─────────────────────────────────────────────
+/goal statement for Sprint [N] — paste into Claude Code:
+─────────────────────────────────────────────
+
+/goal [Product Name] — [one-sentence problem]. Users: [persona]. Current sprint: [Sprint N goal]. Key principles: [principle 1], [principle 2]. SMART target: [objective most relevant to this sprint]. Sprint ends: [date]. Out of scope this sprint: [anything explicitly deferred].
+
+─────────────────────────────────────────────
+
+When Sprint [N] is complete, run /sarthi-pm → "Plan next sprint(s)" to advance to Sprint [N+1].
+```
+
+If multiple sprints were planned, also show the /goal blocks for subsequent sprints so the user can save them:
+
+```
+Upcoming sprint /goal statements (save these for later):
+
+Sprint [N+1]: /goal [Product Name] — [...]. Current sprint: [Sprint N+1 goal]. Sprint ends: [date].
+Sprint [N+2]: /goal [Product Name] — [...]. Current sprint: [Sprint N+2 goal]. Sprint ends: [date].
 ```
 
 ---

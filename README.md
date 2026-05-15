@@ -59,6 +59,7 @@ This automatically configures:
 - The **SessionStart hook** so Sarthi activates at the start of every session
 - The **PostToolUse hook** so graphify stays fresh after every code edit
 - **codeburn menubar** for passive background cost monitoring
+- Optionally, a **global pre-commit hook** that scans staged files for hardcoded secrets before every git commit
 
 > ⚠️ **Restart Claude Code after setup for hooks to take effect.**
 
@@ -139,8 +140,9 @@ After that, just describe what you want. Sarthi handles the rest.
 | Intent | With tools | Without tools |
 |--------|-----------|---------------|
 | **Idea → product brief** | `/sarthi-pm` — full PM flow | `/sarthi-pm` — always available |
+| **Sprint planning** | `/sarthi-pm` Sprint Planning Flow | `/sarthi-pm` Sprint Planning Flow |
 | Build feature | `/ce-plan` → `/ce-work` | Step-by-step in chat |
-| Large refactor | Morph active + `/ce-work` | Edit file by file |
+| Large refactor | Morph (`mcp__morph-mcp__edit_file`) + `/ce-work` | Edit file by file |
 | Debug / Fix | `/ce-debug` | Systematic root cause |
 | Frontend / UI | `/ce-frontend-design` | Design-quality prompting |
 | Review / PR | `/ce-code-review` + Codex dispatch | Structured review |
@@ -239,7 +241,7 @@ Before every task, Sarthi checks six things:
 
 1. **Deliverable named?** — Asks for a one-sentence outcome if missing (skipped for informational queries and navigation requests)
 2. **Graphify available?** — Queries the knowledge graph before any file reads or grep. On a new repo, builds the graph automatically in the background (`graphify extract .` uses LLM tokens once; all subsequent refreshes are free)
-3. **Morph available?** — Surfaces Morph automatically for bulk/refactor edits
+3. **Morph available?** — For tasks touching 3+ files, switches to `mcp__morph-mcp__edit_file` for all edits in the task. Morph's MCP server starts automatically but edits must be explicitly routed through it.
 4. **Better for Codex?** — Offers an independent parallel review rather than doing it inline
 5. **Retry guard** — Stops after two failed attempts and prompts reconsideration
 6. **Karpathy pre-flight** — Before any non-trivial code change: stops and asks the user to confirm assumptions, scope, and success criteria interactively before writing a single line
@@ -375,6 +377,20 @@ The flow works in 6 phases:
 | **5. Product Brief** | Written to `docs/pm/PRODUCT_BRIEF.md` — a durable, updatable doc |
 | **6. /goal Output** | A ready-to-paste `/goal` statement to anchor your Claude Code session |
 
+### Sprint Planning
+
+Once a brief exists, Sarthi can guide you through planning the next 1–N sprints and produce a `/goal` block for each.
+
+**Trigger:** Say "plan next sprint", "sprint planning", "update sprint goal", or choose "Plan next sprint(s)" when `/sarthi-pm` detects an existing brief.
+
+| Phase | What happens |
+|-------|-------------|
+| **Read context** | Reads `docs/pm/PRODUCT_BRIEF.md` — identifies completed sprints and the next sprint to plan |
+| **Confirm position** | Asks how many sprints to plan (1, 2, 3, or a specific sprint) |
+| **Interview per sprint** | Goal, deliverables, end date, blockers — one question at a time |
+| **Update brief** | Writes new sprint entries to the Sprint Breakdown section of `PRODUCT_BRIEF.md` |
+| **Output /goal** | Produces a ready-to-paste `/goal` block for the sprint you're about to start, plus saved blocks for upcoming sprints |
+
 ### /goal Integration
 
 At the end of the flow, Sarthi produces a `/goal`-ready block:
@@ -419,6 +435,29 @@ Each domain returns `pass / warn / fail` with file paths and line numbers. The r
 You can target a specific domain: `sarthi audit keys`, `sarthi audit security`, etc.
 
 The weekly clock resets after each audit. Timestamp stored in `~/.claude/.sarthi-audit-ts`.
+
+## 🔐 Pre-commit Secrets Scan (opt-in)
+
+Installed during `/sarthi-setup`, this global git hook scans staged files for hardcoded secrets before every `git commit` — catching keys before they enter git history, not just during weekly audits.
+
+**What it scans staged files for:**
+- Anthropic, AWS, GitHub, Slack, and Google API keys
+- Private key blocks (`-----BEGIN PRIVATE KEY-----`)
+- Hardcoded `password`, `secret`, `api_key`, and `token` assignments
+
+**How it works:**
+- Runs automatically on every `git commit` across all repos on your machine
+- Blocks the commit and shows the file path + line number if a match is found
+- To bypass intentionally: `git commit --no-verify`
+- To disable globally: `git config --global --unset core.hooksPath`
+
+Enable during `/sarthi-setup` or install manually:
+```bash
+mkdir -p ~/.claude/.sarthi-hooks
+# write hook script to ~/.claude/.sarthi-hooks/pre-commit (see sarthi-setup/SKILL.md)
+chmod +x ~/.claude/.sarthi-hooks/pre-commit
+git config --global core.hooksPath ~/.claude/.sarthi-hooks
+```
 
 ## 📁 Best Practices Templates
 

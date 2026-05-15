@@ -211,6 +211,15 @@ If enabled — invoke `sarthi-model-advisor`. It scores task complexity and sugg
 
 > This is distinct from brainstorm or plan. Use it when the user is **pre-implementation** — shaping an idea, not yet implementing it.
 
+### Sprint Planning
+**Signal:** "plan next sprint", "sprint planning", "update sprint goal", "plan sprints", "next sprint", "advance sprint", "what's the next sprint"
+
+| Available | Route |
+|-----------|-------|
+| always | `/sarthi-pm` Sprint Planning Flow — reads existing `docs/pm/PRODUCT_BRIEF.md`, guides through sprint goals and deliverables for 1–N sprints, outputs a `/goal` block per sprint |
+
+> Distinct from Product/Idea Development. Use when the user already has a brief and is advancing through their sprint breakdown, not creating a new product.
+
 ### Brainstorm / Explore
 **Signal:** "brainstorm", "options", "ideas", "alternatives", "what if"
 

@@ -14,9 +14,8 @@ Run this skill once after installing Sarthi. It configures everything automatica
 3. Installs codeburn menubar (if codeburn is installed)
 4. Optionally sets `ANTHROPIC_API_KEY` in your shell profile (needed for graphify; skippable)
 5. Optionally configures the Morph MCP server in `~/.claude.json` (enables fast bulk edits; skippable)
-6. Optionally enables the prompt optimizer (opt-in; suggests token-efficient rewording before routing)
-7. Optionally enables the session monitor (opt-in; warns at 90% and 100% context fill, twice per session)
-8. Optionally enables the model advisor (opt-in; suggests Haiku/Sonnet/Opus based on task complexity)
+6. Optionally enables the prompt optimizer, session monitor, and model advisor (opt-in advisors)
+7. Optionally installs a global pre-commit hook that scans staged files for hardcoded secrets before every git commit
 
 ## Steps
 
@@ -215,14 +214,104 @@ Learns from your choices. Rejects twice → silent for the session.
 ```
 If y: `touch ~/.claude/.sarthi-model-advisor-enabled`
 
-### Step 7 — Install codeburn menubar
+### Step 7 — Install pre-commit secrets scan (opt-in)
+
+Check if already configured:
+```bash
+[ -f ~/.claude/.sarthi-hooks/pre-commit ] && echo "configured" || echo "missing"
+```
+
+If already configured, skip this step silently.
+
+If NOT configured, ask:
+
+```
+Pre-commit secrets scan — scans staged files for hardcoded API keys, tokens,
+and private keys before every git commit. Blocks the commit if matches are found.
+Applies globally to all git repos on this machine.
+
+  [y] Yes — install global pre-commit hook
+  [s] Skip — I'll handle secrets scanning another way
+
+Your choice (y/s):
+```
+
+If the user chooses **y**:
+
+1. Create the hooks directory:
+```bash
+mkdir -p ~/.claude/.sarthi-hooks
+```
+
+2. Write the hook script:
+```bash
+cat > ~/.claude/.sarthi-hooks/pre-commit << 'HOOK'
+#!/bin/bash
+# Sarthi pre-commit hook — scans staged files for hardcoded secrets
+# Installed by /sarthi-setup
+# To disable: git config --global --unset core.hooksPath
+
+STAGED_FILES=$(git diff --cached --name-only 2>/dev/null)
+[ -z "$STAGED_FILES" ] && exit 0
+
+FOUND=0
+
+while IFS= read -r file; do
+  [ -f "$file" ] || continue
+  result=$(grep -n \
+    -e "sk-ant-" \
+    -e "AKIA[0-9A-Z]\{16\}" \
+    -e "ghp_[a-zA-Z0-9]\{36\}" \
+    -e "gho_[a-zA-Z0-9]\{36\}" \
+    -e "xoxb-\|xoxp-" \
+    -e "AIza[0-9A-Za-z_-]\{35\}" \
+    -e "-----BEGIN.*PRIVATE KEY-----" \
+    -e "password\s*=\s*['\"][^'\"]\{4,\}['\"]" \
+    -e "secret\s*=\s*['\"][^'\"]\{4,\}['\"]" \
+    -e "api_key\s*=\s*['\"][^'\"]\{4,\}['\"]" \
+    "$file" 2>/dev/null)
+  if [ -n "$result" ]; then
+    if [ $FOUND -eq 0 ]; then
+      echo ""
+      echo "🔴  Sarthi pre-commit: possible secrets detected in staged files"
+      echo ""
+    fi
+    FOUND=1
+    echo "  $file"
+    echo "$result" | sed 's/^/    /'
+    echo ""
+  fi
+done <<< "$STAGED_FILES"
+
+if [ $FOUND -eq 1 ]; then
+  echo "Review the above before committing."
+  echo "To bypass (only if intentional): git commit --no-verify"
+  echo ""
+  exit 1
+fi
+exit 0
+HOOK
+chmod +x ~/.claude/.sarthi-hooks/pre-commit
+```
+
+3. Configure git to use this hooks directory globally:
+```bash
+git config --global core.hooksPath ~/.claude/.sarthi-hooks
+```
+
+Confirm: "Pre-commit secrets scan installed globally. Staged files will be checked before every git commit. To disable: `git config --global --unset core.hooksPath`"
+
+If the user chooses **s**:
+- Show: "Skipped. Install any time by re-running `/sarthi-setup`."
+
+### Step 8 — Install codeburn menubar
 
 If codeburn is installed and menubar is not already running:
 ```bash
 codeburn menubar &
 ```
 
-### Step 8 — Confirm to the user
+### Step 9 — Confirm to the user
 
 After completing the above, report clearly what was done and what was skipped (already configured). Use this format:
 
@@ -236,6 +325,7 @@ Sarthi setup complete.
 ✓ Prompt optimizer      — enabled
 ✓ Session monitor       — enabled
 ✓ Model advisor         — enabled
+✓ Pre-commit scan       — installed (~/.claude/.sarthi-hooks/pre-commit)
 ✓ codeburn menubar      — launched
 
 Restart Claude Code (or open a new session) for the hooks to take effect.
@@ -251,6 +341,8 @@ For each advisor (prompt optimizer, session monitor, model advisor):
 - If enabled in this run, show `— enabled`
 - If already enabled before setup, show `— already enabled`
 - If skipped, show `— skipped (touch ~/.claude/.<flag-file> to enable)`
+If the user skipped pre-commit scan, show `— skipped (re-run /sarthi-setup to install)`.
+If pre-commit scan was already installed, show `— already installed`.
 
 ### Important
 
