@@ -1,25 +1,26 @@
 ---
 name: sarthi-session-monitor
-description: Opt-in session length monitor. Warns once at 90% context fill (suggests /compact) and once at 100% (recommends fresh session). Fires at most twice per session, never more. Only active if ~/.claude/.sarthi-session-monitor-enabled exists.
+description: Opt-in session length monitor. Warns once at ~90% context fill (suggests /compact) and once at ~100% (recommends fresh session). Fires at most twice per session. Only active if ~/.claude/.sarthi-session-monitor-enabled exists.
 ---
 
 # Sarthi Session Monitor
 
-Tracks estimated context fill and nudges the user before Claude performance degrades. Fires at most twice per session — at the 90% and 100% marks. Never repeats a mark already warned.
+Estimates context fill from conversation depth and nudges the user before Claude's reasoning quality degrades. Fires at most twice per session — never more.
 
 **Guard:** Only runs if `~/.claude/.sarthi-session-monitor-enabled` exists. If not, skip entirely.
+
+**Note:** codeburn tracks daily/monthly spend totals — it does not expose per-session token counts and is not used here. Context fill is estimated from conversation signals only.
 
 ---
 
 ## Context window reference
 
-| Model | Context limit | 90% mark | 100% mark |
-|-------|--------------|----------|-----------|
-| claude-haiku-4-5 | 200k tokens | ~180k | 200k |
-| claude-sonnet-4-6 | 200k tokens | ~180k | 200k |
-| claude-opus-4-7 | 200k tokens | ~180k | 200k |
-
 All current Claude models share a 200k token context window.
+
+| Threshold | Tokens | Action |
+|-----------|--------|--------|
+| 90% mark | ~180k | Suggest `/compact` or new session |
+| 100% mark | ~200k | Recommend fresh session with handoff checklist |
 
 ---
 
@@ -33,81 +34,76 @@ If disabled, exit immediately.
 
 ---
 
-## Step 2 — Estimate context fill
+## Step 2 — Estimate context fill from conversation signals
 
-**If codeburn is installed:**
-```bash
-codeburn status --json 2>/dev/null | python3 -c "
-import sys, json
-d = json.load(sys.stdin)
-tokens = d.get('current_session', {}).get('total_tokens', 0)
-pct = round((tokens / 200000) * 100, 1)
-print(f'tokens:{tokens} pct:{pct}')
-" 2>/dev/null || echo "codeburn:unavailable"
-```
+Claude has direct awareness of its own context state. Self-assess fill using these signals in combination:
 
-**If codeburn is unavailable**, self-assess using conversation signals:
-- Count approximate message exchanges in this session
-- Estimate average tokens per exchange (~800 tokens for a typical back-and-forth with tool calls)
-- Multiply to get rough total
-- Flag as estimate: prefix result with `estimated:`
+**Conversation depth proxies:**
+- Count of message exchanges in this session (each exchange ≈ 800–2,000 tokens with tool calls)
+- Number of large tool outputs (file reads, bash output, grep results) — each adds 1k–10k tokens
+- Number of file edits made this session — each Write/Edit cycle adds context
+- Whether `/compact` has already been run this session (resets the baseline)
 
-If the fill cannot be determined at all, skip this check silently.
+**Rough token estimates:**
+| Session shape | Estimated tokens |
+|--------------|-----------------|
+| < 20 short exchanges, few tool calls | < 50k — low |
+| 20–40 exchanges, moderate tool use | 50k–120k — medium |
+| 40–60 exchanges, heavy tool use | 120k–170k — approaching limit |
+| 60+ exchanges or very large tool outputs | 170k+ — near/at limit |
+
+Use Claude's own sense of context saturation as the primary signal. If the conversation feels long and deep — it is. Do not over-engineer the estimate; a directional read is sufficient.
+
+Output: `low`, `approaching` (~90%), or `full` (~100%).
 
 ---
 
 ## Step 3 — Check thresholds and session marks
 
-Read session marks from in-memory state (tracked as variables within this session only — not persisted to disk since they reset naturally when a new session starts):
+Track two marks in session memory (not persisted to disk — resets when session ends):
+- `warned_90` — 90% nudge already fired this session
+- `warned_100` — 100% nudge already fired this session
 
-- `warned_90` — whether the 90% nudge has already fired this session
-- `warned_100` — whether the 100% nudge has already fired this session
+**If both marks already fired** — exit silently. Never fire a third time.
 
-**At 90–99% fill** (and `warned_90` is false):
+**At `approaching` (~90%)** and `warned_90` is false:
 
 Set `warned_90 = true`. Show:
 
 ```
-⚠️  Session at ~90% context capacity.
+⚠️  Session approaching context limit (~90% full).
 
-Claude's reasoning quality degrades as the context window fills.
+Claude's reasoning quality degrades as context fills.
 Options:
-  /compact     — compress conversation history in place (continues this session)
-  New session  — fresh start with full context (most effective for complex remaining work)
+  /compact    — compress conversation history in place (free, continues this session)
+  New session — fresh start with full context (best for complex remaining work)
 
 Your current task will proceed — this is just a heads-up.
 ```
 
-Then proceed with routing the current task normally.
-
-**At 100%+ fill** (and `warned_100` is false):
+**At `full` (~100%)** and `warned_100` is false:
 
 Set `warned_100 = true`. Show:
 
 ```
-🔴  Session at full context capacity.
+🔴  Session at context capacity (~100% full).
 
-Response quality is likely degraded. Starting a new session is strongly recommended.
+Response quality is likely degraded. A fresh session is strongly recommended.
 
 To hand off cleanly:
-  1. Run /revise-claude-md (if installed) to save any key decisions
-  2. Note your current task: "[current task description]"
-  3. Open a new Claude Code session
-  4. Paste your task and any relevant context
+  1. Run /revise-claude-md (if installed) to save key decisions to CLAUDE.md
+  2. Note your current task so you can resume it
+  3. Open a new Claude Code session and paste your task
 
-Your current task will still proceed — but consider the above before continuing.
+Your current task will still proceed — but consider the above first.
 ```
 
-Then proceed with routing the current task normally.
-
-**Below 90%** — no nudge, exit silently.
-
-**After both marks have fired** — exit silently for the remainder of the session. Never fire a third time.
+**At `low`** — exit silently, no nudge.
 
 ---
 
 ## Notes
 
-- Both nudges are **non-blocking** — they appear as warnings, not gates. The current task always proceeds.
-- The marks are per-session only. A new Claude Code session resets both to false automatically.
-- If context fill is estimated (no codeburn), use slightly conservative thresholds: warn at 80% for the first nudge, 95% for the second, to account for estimation error.
+- Both nudges are non-blocking. The current task always proceeds regardless.
+- Marks are per-session only — a new Claude Code session resets them naturally.
+- If `/compact` has been run this session, reset the fill estimate to `low` and reset `warned_90` (the 90% mark can fire again after compaction, since the context has genuinely reset).
