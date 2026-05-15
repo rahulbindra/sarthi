@@ -318,6 +318,15 @@ cd ~/sarthi && git pull && for skill in skills/*/; do skill_name=$(basename "$sk
 ```
 Confirm which skill files were updated. No restart required — skill files are read fresh each session.
 
+After updating, immediately check for unconfigured opt-ins:
+```bash
+[ ! -f ~/.claude/.sarthi-prompt-optimizer-enabled ] && echo "optimizer:unconfigured" || echo "optimizer:configured"
+[ ! -f ~/.claude/.sarthi-session-monitor-enabled ] && echo "monitor:unconfigured" || echo "monitor:configured"
+[ ! -f ~/.claude/.sarthi-model-advisor-enabled ] && echo "advisor:unconfigured" || echo "advisor:configured"
+```
+
+If any are unconfigured, surface the same `⚙️ New features available` block from step 1d and run the "sarthi setup new" flow inline — don't wait for next session.
+
 ### Save Learnings
 **Signal:** "save learnings", "remember this", "save this", "update CLAUDE.md", "learnings", "note this", "don't forget", "add to memory", "store this", "keep this"
 
