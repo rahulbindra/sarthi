@@ -48,14 +48,18 @@ The current model is the one this session was started with. Infer it from sessio
 
 ## Step 2b — Skip conditions
 
-Exit silently (do not assess or suggest) if the message is any of the following:
+**Skip** (exit silently) only if the message clearly has no task implied:
 
-- **Informational / opinion question** — "how would you rate", "what do you think", "explain", "why did", "what is", "is there a", "does X work", "what's the difference"
-- **Single-word or very short reply** (under 5 words) — assess complexity from the **last 3 turns of context** instead; if context is also ambiguous, skip
-- **Conversational follow-up** — "yes", "no", "both", "sure", "ok", "go ahead", "skip"
+- **Pure factual or opinion question** — "how would you rate", "what do you think", "explain X", "why did X", "what is X", "is there a downside", "what's the difference", "does X work"
+- **Pure acknowledgment with no pending task** — "ok", "got it", "I see", "makes sense", "thanks" — and the last 3 turns contain no proposed task waiting for approval
 - **Already assessed this turn** — never suggest twice for the same message
 
-Same exemption as the deliverable check in Step 3 of the main SKILL.md: informational questions and navigation requests are excluded from model assessment.
+**Never skip** for:
+
+- Any message requesting an edit, fix, audit, creation, or diagram change — regardless of length
+- A short reply ("yes", "both", "go ahead", "sure") when the last 2–3 turns contain a pending task proposal — assess the **proposed task's complexity** instead of the reply itself
+
+**Short reply rule:** If the message is under 5 words and is approving a previously proposed task, assess the complexity of that task (from the last 3 turns), not the reply. Only skip if the context also contains no pending task.
 
 ---
 
