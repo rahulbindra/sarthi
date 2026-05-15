@@ -363,24 +363,27 @@ Don't proceed until answered.
 
 Skip this check for: informational questions ("how does X work", "where is X", "what is X"), cost/spend queries, codebase navigation requests, and research/lookup requests. Apply only when the task involves writing or modifying code or files.
 
-**2. Graphify available?**
+**2. Read before edit?**
+Before editing any file, read it first. Before modifying a function, grep for all callers. Research before you edit. Never write to a file you haven't read in this session.
+
+**3. Graphify available?**
 If `graphify-out/graph.json` exists — always `graphify query` before reading or grepping. Never grep first.
 
-**3. Morph available?**
+**4. Morph available?**
 If `morph:yes` and the task touches 3 or more files — announce it and switch tools:
 > "Morph is active — using `mcp__morph-mcp__edit_file` for all edits in this task."
 
 Then use `mcp__morph-mcp__edit_file` instead of the native `Edit` tool for every file change in this task. Do not mix Edit and Morph in the same task.
 
-**4. Better for Codex?**
+**5. Better for Codex?**
 If the task is primarily investigation or review and Codex is installed:
 > "This looks like a good candidate for parallel Codex review — want me to dispatch it for an independent second opinion?"
 
-**5. Retry guard**
+**6. Retry guard**
 If the same fix approach fails twice — stop:
 > "Same approach failed twice. Let's step back and reconsider before trying again."
 
-**6. Karpathy pre-flight** (for any non-trivial coding task)
+**7. Karpathy pre-flight** (for any non-trivial coding task)
 Before writing a single line of code, do three things interactively — adapted from [Andrej Karpathy's observations](https://x.com/karpathy/status/2015883857489522876) on LLM coding pitfalls, via [andrej-karpathy-skills](https://github.com/multica-ai/andrej-karpathy-skills):
 - **Assumptions stated?** If anything is ambiguous, **stop and ask the user** — do not guess silently. Present your interpretations and wait for confirmation before proceeding.
 - **Scope minimal?** Confirm with the user what's in and out. Flag adjacent issues you notice, but don't fix them.
