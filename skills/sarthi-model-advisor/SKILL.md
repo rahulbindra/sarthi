@@ -46,6 +46,19 @@ The current model is the one this session was started with. Infer it from sessio
 
 ---
 
+## Step 2b — Skip conditions
+
+Exit silently (do not assess or suggest) if the message is any of the following:
+
+- **Informational / opinion question** — "how would you rate", "what do you think", "explain", "why did", "what is", "is there a", "does X work", "what's the difference"
+- **Single-word or very short reply** (under 5 words) — assess complexity from the **last 3 turns of context** instead; if context is also ambiguous, skip
+- **Conversational follow-up** — "yes", "no", "both", "sure", "ok", "go ahead", "skip"
+- **Already assessed this turn** — never suggest twice for the same message
+
+Same exemption as the deliverable check in Step 3 of the main SKILL.md: informational questions and navigation requests are excluded from model assessment.
+
+---
+
 ## Step 3 — Assess task complexity
 
 Score the task against complexity signals to determine the recommended model tier.
