@@ -36,6 +36,12 @@ Sarthi is a router — it needs tools to route to. Install any combination of th
 
 Sarthi works with any subset — or none at all. Start with compound-engineering and graphify for the most impact.
 
+> **Note for graphify users:** Claude Code authenticates via OAuth, not an API key — so `ANTHROPIC_API_KEY` is not set in your shell automatically. Graphify is a separate CLI that makes direct API calls and needs its own key. Create one at [console.anthropic.com/keys](https://console.anthropic.com/keys) and add it to your shell profile:
+> ```bash
+> export ANTHROPIC_API_KEY=sk-ant-...
+> ```
+> Only the initial `graphify extract .` costs tokens. All subsequent `graphify update .` calls (run automatically by the PostToolUse hook after every file edit) are free.
+
 ### Step 1 — Install the plugin
 ```
 /plugin marketplace add https://github.com/rahulbindra/sarthi
