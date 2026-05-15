@@ -327,6 +327,12 @@ After updating, immediately check for unconfigured opt-ins:
 
 If any are unconfigured, surface the same `⚙️ New features available` block from step 1d and run the "sarthi setup new" flow inline — don't wait for next session.
 
+Finally, re-invoke the Sarthi skill to reload the updated SKILL.md into the current session:
+```
+Skill("sarthi")
+```
+This ensures updated routing rules and pre-routing checks take effect immediately without requiring a session restart.
+
 ### Save Learnings
 **Signal:** "save learnings", "remember this", "save this", "update CLAUDE.md", "learnings", "note this", "don't forget", "add to memory", "store this", "keep this"
 
