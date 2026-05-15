@@ -122,7 +122,7 @@ If enabled — invoke `sarthi-model-advisor`. It scores task complexity and sugg
 ## Step 2: Route by Intent
 
 ### Build / Implement
-**Signal:** "build", "add", "implement", "create", "make", "new feature"
+**Signal:** "build", "implement", "add", "create", "make", "write", "develop", "scaffold", "wire up", "integrate", "extend", "set up", "generate", "new feature"
 
 | Available | Route |
 |-----------|-------|
@@ -133,7 +133,7 @@ If enabled — invoke `sarthi-model-advisor`. It scores task complexity and sugg
 > If Morph is available and the task involves editing multiple files, note: *"Morph is active — large edits will be applied faster automatically."*
 
 ### Large Refactor / Bulk Edits
-**Signal:** "refactor", "rename across", "move all", "restructure", "update every", "bulk change"
+**Signal:** "refactor", "large refactor", "bulk edits", "rename across", "move all", "restructure", "update every", "bulk change", "reorganize", "rewrite", "overhaul", "migrate", "convert", "replace all", "sweep", "clean up"
 
 | Available | Route |
 |-----------|-------|
@@ -144,7 +144,7 @@ If enabled — invoke `sarthi-model-advisor`. It scores task complexity and sugg
 > Always surface Morph explicitly for this intent: *"Morph is active — it will apply these bulk edits faster and cheaper than standard edits."*
 
 ### Debug / Fix
-**Signal:** "bug", "error", "failing", "broken", "fix", "crash", stack trace
+**Signal:** "debug", "fix", "bug", "error", "failing", "broken", "crash", "not working", "issue", "problem", "wrong", "unexpected", "exception", "regression", "why is", "why does", "weird", "investigate", stack trace
 
 | Available | Route |
 |-----------|-------|
@@ -154,7 +154,7 @@ If enabled — invoke `sarthi-model-advisor`. It scores task complexity and sugg
 | vanilla Claude | Ask for error + context → systematic root cause analysis |
 
 ### Frontend / UI
-**Signal:** "UI", "screen", "component", "design", "layout", "frontend", "CSS"
+**Signal:** "frontend", "UI", "screen", "component", "design", "layout", "CSS", "style", "theme", "animation", "button", "form", "view", "visual", "UX", "interface", "responsive", "colors", "typography"
 
 | Available | Route |
 |-----------|-------|
@@ -165,7 +165,7 @@ If enabled — invoke `sarthi-model-advisor`. It scores task complexity and sugg
 > If Morph is available, note it will handle applying the generated UI code faster.
 
 ### Review / PR
-**Signal:** "review", "PR", "pull request", "check my code", "before I ship"
+**Signal:** "review", "PR", "pull request", "check my code", "before I ship", "feedback", "sanity check", "looks good?", "critique", "assess", "evaluate", "is this right"
 
 | Available | Route |
 |-----------|-------|
@@ -177,7 +177,7 @@ If enabled — invoke `sarthi-model-advisor`. It scores task complexity and sugg
 | vanilla Claude | Structured review: correctness → security → style |
 
 ### Ship / Commit
-**Signal:** "commit", "ship", "push", "open PR", "done"
+**Signal:** "ship", "commit", "push", "open PR", "done", "merge", "release", "wrap up", "finalize", "I'm done", "ready to merge", "push to git", "update git"
 
 | Available | Route |
 |-----------|-------|
@@ -186,7 +186,7 @@ If enabled — invoke `sarthi-model-advisor`. It scores task complexity and sugg
 | vanilla Claude | Conventional commit → push |
 
 ### Codebase Navigation
-**Signal:** "how does X work", "where is X", "find X", "what calls X", "which file"
+**Signal:** "navigate", "how does X work", "where is X", "find X", "what calls X", "which file", "explain", "show me", "trace", "understand", "what is", "walk me through", "how is", "locate"
 
 | Available | Route |
 |-----------|-------|
@@ -195,7 +195,7 @@ If enabled — invoke `sarthi-model-advisor`. It scores task complexity and sugg
 | vanilla Claude | Targeted `grep`, read key files |
 
 ### Strategy / Planning
-**Signal:** "strategy", "roadmap", "direction", "what should we build"
+**Signal:** "strategy", "planning", "roadmap", "direction", "what should we build", "approach", "architecture", "technical direction", "what's next", "prioritize", "decide", "design decision"
 
 | Available | Route |
 |-----------|-------|
@@ -203,7 +203,7 @@ If enabled — invoke `sarthi-model-advisor`. It scores task complexity and sugg
 | vanilla Claude | Structured strategy doc in chat |
 
 ### Product / Idea Development
-**Signal:** "I have an idea", "help me design", "I want to build", "design an app", "product planning", "think through this with me", "startup idea", "feature planning", "plan my product", "turn this idea into a plan"
+**Signal:** "I have an idea", "help me design", "I want to build", "design an app", "product planning", "think through this with me", "startup idea", "feature planning", "plan my product", "turn this idea into a plan", "ideate", "concept"
 
 | Available | Route |
 |-----------|-------|
@@ -221,7 +221,7 @@ If enabled — invoke `sarthi-model-advisor`. It scores task complexity and sugg
 > Distinct from Product/Idea Development. Use when the user already has a brief and is advancing through their sprint breakdown, not creating a new product.
 
 ### Brainstorm / Explore
-**Signal:** "brainstorm", "options", "ideas", "alternatives", "what if"
+**Signal:** "brainstorm", "explore", "options", "ideas", "alternatives", "what if", "think through", "consider", "possibilities", "trade-offs", "pros and cons"
 
 | Available | Route |
 |-----------|-------|
@@ -229,7 +229,7 @@ If enabled — invoke `sarthi-model-advisor`. It scores task complexity and sugg
 | vanilla Claude | Structured ideation with pros/cons |
 
 ### Research / Web
-**Signal:** "look up", "docs for", "research", URL provided
+**Signal:** "research", "look up", "docs for", "find out", "search for", "how to", "documentation", "examples", "learn about", "what does X do", URL provided
 
 | Available | Route |
 |-----------|-------|
@@ -246,15 +246,15 @@ If enabled — invoke `sarthi-model-advisor`. It scores task complexity and sugg
 Specific domains can be targeted: `sarthi audit security`, `sarthi audit keys`, etc.
 
 ### Cost / Spend
-**Signal:** "how much", "cost", "spend", "tokens", "optimize usage", "codeburn audit"
+**Signal:** "cost", "spend", "how much", "tokens", "optimize", "optimizing", "codeburn audit", "last N days", "expensive", "savings", "waste", "efficiency", "burn rate", "usage", "token waste", "usage report"
 
 | Available | Route |
 |-----------|-------|
-| codeburn | `codeburn status` then `touch ~/.claude/.sarthi-codeburn-ts` |
+| codeburn | `codeburn optimize` for suggestions, `codeburn status` for summary, then `touch ~/.claude/.sarthi-codeburn-ts` |
 | vanilla Claude | Review session length, suggest `/compact` or fresh session |
 
 ### New Repo Setup
-**Signal:** "just cloned", "new repo", "new project", "set up codebase"
+**Signal:** "new repo setup", "just cloned", "new repo", "new project", "set up codebase", "onboard", "getting started", "fresh clone", "initialize", "first time in"
 
 | Available | Route |
 |-----------|-------|
@@ -262,7 +262,7 @@ Specific domains can be targeted: `sarthi audit security`, `sarthi audit keys`, 
 | vanilla Claude | Read README + key config files + list structure |
 
 ### Save Learnings
-**Signal:** "remember this", "save this", "update CLAUDE.md", "learnings"
+**Signal:** "save learnings", "remember this", "save this", "update CLAUDE.md", "learnings", "note this", "don't forget", "add to memory", "store this", "keep this"
 
 | Available | Route |
 |-----------|-------|
@@ -270,7 +270,7 @@ Specific domains can be targeted: `sarthi audit security`, `sarthi audit keys`, 
 | vanilla Claude | Summarize key decisions → suggest adding to CLAUDE.md |
 
 ### Parallel Work
-**Signal:** "parallel", "at the same time", "two things at once"
+**Signal:** "parallel work", "parallel", "at the same time", "two things at once", "simultaneously", "concurrently", "both at once", "multiple tasks", "split this"
 
 | Available | Route |
 |-----------|-------|
@@ -337,6 +337,30 @@ When explaining a concept or correcting a misunderstanding:
 - Lead with the sharpest distinction first. Never soften or hedge to ease the user in.
 - If the user's understanding is partially wrong, correct the wrong part explicitly before validating the right part.
 - Do not wait for pushback to deliver the accurate framing.
+
+**Intent logging (runs after every routing decision)**
+After routing — or falling back to vanilla Claude — append a log entry silently:
+```bash
+echo "{\"ts\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",\"phrase\":\"PHRASE\",\"routed_to\":\"TOOL\"}" >> ~/.claude/.sarthi-intent-log.jsonl
+```
+- Replace `PHRASE` with a 3–5 word summary of the user's message
+- Replace `TOOL` with the skill invoked (e.g. `ce-debug`, `codeburn`, `graphify`)
+- Use `"unrouted"` when falling back to vanilla Claude — these are miss candidates
+
+---
+
+## sarthi-learn
+
+**Trigger:** "sarthi learn", "sarthi missed", "you should have used", "why didn't you use", "review intent log"
+
+When triggered:
+1. Read `~/.claude/.sarthi-intent-log.jsonl`
+2. Group `"unrouted"` entries by phrase similarity — these are routing misses
+3. For each cluster, propose a signal word and the intent it maps to
+4. Present proposals to the user — approve or reject each
+5. On approval, update the Signal line in the matching intent in Step 2 of this SKILL.md and sync the change to `~/sarthi/skills/sarthi/SKILL.md`
+
+Keep the log unbounded — it is the source of truth for routing improvement over time.
 
 ---
 
