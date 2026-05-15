@@ -13,6 +13,7 @@ Run this skill once after installing Sarthi. It configures everything automatica
 2. Adds the graphify PostToolUse hook to `~/.claude/settings.json`
 3. Installs codeburn menubar (if codeburn is installed)
 4. Optionally sets `ANTHROPIC_API_KEY` in your shell profile (needed for graphify; skippable)
+5. Optionally configures the Morph MCP server in `~/.claude.json` (enables fast bulk edits; skippable)
 
 ## Steps
 
@@ -98,14 +99,55 @@ If the user chooses **s**:
 - Show: "Skipped. You can add it manually later: `export ANTHROPIC_API_KEY=sk-ant-...` in your shell profile."
 - Continue to next step.
 
-### Step 5 — Install codeburn menubar
+### Step 5 — Set up Morph MCP server (optional)
+
+Check if Morph is already configured in `~/.claude.json`:
+```bash
+jq -e '.mcpServers["morph-mcp"]' ~/.claude.json > /dev/null 2>&1 && echo "configured" || echo "missing"
+```
+
+If already configured, skip this step silently.
+
+If NOT configured, ask the user:
+
+```
+Morph enables fast bulk code edits via MCP — useful for refactors and renames across many files.
+
+Would you like to set it up now?
+  [y] Yes — paste your Morph API key and I'll configure it
+  [s] Skip — I'll set it up manually later (see morphllm.com)
+
+Your choice (y/s):
+```
+
+If the user chooses **y**:
+- Ask: "Paste your Morph API key (get one at morphllm.com):"
+- Add the MCP server entry to `~/.claude.json` using jq:
+```bash
+jq '.mcpServers["morph-mcp"] = {
+  "type": "stdio",
+  "command": "npx",
+  "args": ["--prefer-offline", "-y", "@morphllm/morphmcp@latest", "--api-key", "<key they pasted>"],
+  "env": {
+    "MORPH_API_KEY": "<key they pasted>",
+    "DISABLED_TOOLS": ""
+  }
+}' ~/.claude.json > /tmp/sarthi-claude-tmp.json && mv /tmp/sarthi-claude-tmp.json ~/.claude.json
+```
+- Confirm: "Morph MCP configured in ~/.claude.json. It will be active after you restart Claude Code."
+
+If the user chooses **s**:
+- Show: "Skipped. Get a Morph API key at morphllm.com and re-run /sarthi-setup to add it."
+- Continue to next step.
+
+### Step 7 — Install codeburn menubar
 
 If codeburn is installed and menubar is not already running:
 ```bash
 codeburn menubar &
 ```
 
-### Step 6 — Confirm to the user
+### Step 8 — Confirm to the user
 
 After completing the above, report clearly what was done and what was skipped (already configured). Use this format:
 
@@ -115,6 +157,7 @@ Sarthi setup complete.
 ✓ SessionStart hook     — added to ~/.claude/settings.json
 ✓ PostToolUse hook      — added to ~/.claude/settings.json
 ✓ ANTHROPIC_API_KEY     — added to ~/.zprofile
+✓ Morph MCP             — configured in ~/.claude.json
 ✓ codeburn menubar      — launched
 
 Restart Claude Code (or open a new session) for the hooks to take effect.
@@ -124,6 +167,8 @@ If something was already configured, show `— already configured` instead of `�
 If codeburn is not installed, show `— codeburn not installed, skipped`.
 If the user skipped the API key step, show `— skipped (set manually later)`.
 If ANTHROPIC_API_KEY was already in their profile, show `— already configured`.
+If the user skipped Morph, show `— skipped (morphllm.com to set up later)`.
+If Morph was already configured, show `— already configured`.
 
 ### Important
 
