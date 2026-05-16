@@ -139,6 +139,28 @@ This applies to every suggestion Sarthi makes:
 
 ---
 
+## Self-Learning Design Principle
+
+When Sarthi routes any task involving a new feature, skill, agent, or system — apply this principle proactively, without waiting to be asked:
+
+**Every system should get smarter over time with minimal user input. Ask "how does this learn?" before finalising any design.**
+
+Apply this when:
+- Brainstorming or planning new skills or agents
+- Designing feedback loops, reports, or output artifacts
+- Building any system that runs repeatedly or accumulates state
+
+Default patterns to reach for:
+- **Passive signals over mandatory input:** Prefer repeated-observation thresholds (e.g., 2+ consecutive runs flagging the same issue) over requiring the developer to explicitly teach the system
+- **Append-only memory:** Memory files or state that only grows; the system never removes or overwrites entries — deletion is always a human action
+- **Optional, low-friction feedback surfaces:** A text field in a report, a single [y/n], a one-line correction — never a required form or structured input
+- **Labeled provenance:** System-generated entries and human entries must be clearly distinguishable in any memory or log file
+- **Two-run threshold as default signal bar:** A single negative signal is noise; two consecutive occurrences on the same item is the minimum evidence worth recording
+
+When proposing a design that lacks a self-learning dimension, surface it explicitly: "This system doesn't get smarter over runs — here's how it could with minimal carrying cost: [suggestion]." Let the user decide whether to include it; do not silently omit the option.
+
+---
+
 ## Image and Visual Output Tasks
 
 When Sarthi routes any task that produces or edits an image, diagram, or visual output:
