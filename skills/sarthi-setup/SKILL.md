@@ -19,6 +19,54 @@ Run this skill once after installing Sarthi. It configures everything automatica
 
 ## Steps
 
+### Step 0 — Detect tool gaps and show install table
+
+Before configuring anything, check which Sarthi-compatible tools are installed vs. missing. This surfaces what to install to unlock full routing value.
+
+```bash
+command -v graphify > /dev/null 2>&1 && echo "graphify:installed" || echo "graphify:missing"
+command -v codeburn > /dev/null 2>&1 && echo "codeburn:installed" || echo "codeburn:missing"
+jq -e '.mcpServers["morph-mcp"]' ~/.claude.json > /dev/null 2>&1 && echo "morph:configured" || echo "morph:missing"
+[ -d ~/.claude/skills/firecrawl ] && echo "firecrawl:installed" || echo "firecrawl:missing"
+[ -d ~/.claude/skills/compound-engineering ] && echo "compound:installed" || echo "compound:missing"
+[ -d ~/.claude/skills/codex ] && echo "codex:installed" || echo "codex:missing"
+[ -d ~/.claude/skills/superpowers ] && echo "superpowers:installed" || echo "superpowers:missing"
+```
+
+Show this table — mark each row ✓ (installed) or ✗ (missing):
+
+```
+Sarthi tool gap report:
+──────────────────────────────────────────────────────────────────────
+  graphify              [✓/✗]   codebase knowledge graph
+  codeburn              [✓/✗]   token spend analytics
+  morph (MCP)           [✓/✗]   fast bulk code edits
+  firecrawl             [✓/✗]   web research and scraping
+  compound-engineering  [✓/✗]   build, debug, review, ship, strategy
+  codex                 [✓/✗]   parallel code review and investigation
+  superpowers           [✓/✗]   parallel agents, TDD, debugging
+──────────────────────────────────────────────────────────────────────
+[N] tools ready · [M] not installed
+```
+
+For each missing tool, show a one-line install hint below the table:
+
+| Tool | Install hint |
+|------|-------------|
+| graphify | `npm install -g graphify-cli` (see github.com/janwilmake/graphify) |
+| codeburn | see getcodeburn.com |
+| morph | get API key at morphllm.com — Step 5 below will configure it |
+| firecrawl | install the Firecrawl skill plugin |
+| compound-engineering | install the compound-engineering skill plugin |
+| codex | install the codex skill plugin |
+| superpowers | install the superpowers skill plugin |
+
+If all tools are already installed, show: "All Sarthi tools detected — no gaps found." and continue.
+
+Continue to Step 1 regardless — this table is informational only.
+
+---
+
 ### Step 1 — Read current settings
 
 Read `~/.claude/settings.json`. If it doesn't exist, start with `{}`.

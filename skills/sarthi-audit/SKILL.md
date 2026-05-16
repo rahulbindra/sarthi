@@ -8,9 +8,9 @@ argument-hint: "[optional: security|privacy|vulnerability|engineering|attributio
 
 Runs up to 9 parallel audit agents across your codebase — one per domain. Each agent scores its domain pass/warn/fail and returns findings. Results are aggregated into a single report.
 
-After the audit completes, the weekly clock resets:
+After the audit completes, the weekly clock resets (per-project slug, matching the check in Sarthi's session onboarding):
 ```bash
-touch ~/.claude/.sarthi-audit-ts
+PROJECT_SLUG=$(basename "$(pwd)" | tr -cs 'a-zA-Z0-9' '-' | sed 's/-*$//'); touch "$HOME/.claude/.sarthi-audit-ts-$PROJECT_SLUG"
 ```
 
 ---
@@ -275,9 +275,9 @@ with open(path, 'a') as f:
 " 2>/dev/null || true
 ```
 
-Reset the weekly clock:
+Reset the weekly clock (per-project, matching the session onboarding check):
 ```bash
-touch ~/.claude/.sarthi-audit-ts
+PROJECT_SLUG=$(basename "$(pwd)" | tr -cs 'a-zA-Z0-9' '-' | sed 's/-*$//'); touch "$HOME/.claude/.sarthi-audit-ts-$PROJECT_SLUG"
 ```
 
 Confirm to the user: "Audit complete. Next audit due in 7 days."

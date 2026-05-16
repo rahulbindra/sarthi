@@ -32,10 +32,15 @@ If `codeburn:due` (or timestamp file doesn't exist) — add this line to the onb
 ⚠️  Codeburn audit due — last review was 3+ days ago. Type "codeburn audit" to run it now.
 ```
 
-**1c. Check weekly project audit cadence:**
+**1c. Check weekly project audit cadence (per-project):**
+
+Derive a project slug from the current directory — this scopes the audit clock to this project, not the machine:
 ```bash
-([ ! -f ~/.claude/.sarthi-audit-ts ] || python3 -c "import os,time; exit(0 if time.time()-os.path.getmtime(os.path.expanduser('~/.claude/.sarthi-audit-ts'))>604800 else 1)" 2>/dev/null) && echo "audit:due" || echo "audit:recent"
+PROJECT_SLUG=$(basename "$(pwd)" | tr -cs 'a-zA-Z0-9' '-' | sed 's/-*$//'); AUDIT_TS="$HOME/.claude/.sarthi-audit-ts-$PROJECT_SLUG"; ([ ! -f "$AUDIT_TS" ] || python3 -c "import os,time,sys; p=sys.argv[1]; exit(0 if time.time()-os.path.getmtime(p)>604800 else 1)" "$AUDIT_TS" 2>/dev/null) && echo "audit:due" || echo "audit:recent"
 ```
+
+Store `PROJECT_SLUG` in working context — the audit skill uses the same slug to reset the timestamp.
+
 If `audit:due` (or timestamp file doesn't exist) — add this line to the onboarding prompt:
 ```
 ⚠️  Weekly project audit due. Type "sarthi audit" to run security, privacy, vulnerability, engineering, attribution, usability, legal, ethical hacker, and keys/PII checks.
@@ -89,6 +94,21 @@ Skipped tools fall back to standard Claude behaviour.
 ```
 
 Only show rows for tools that are detected. If nothing is detected, skip this prompt entirely and behave as vanilla Claude.
+
+**After the active tools list, if any tools were NOT detected in Step 1, append a "Not installed" section to the welcome prompt.** Only include tools that were actually absent:
+
+```
+Not installed (optional — adds routing for: [comma-list of missing capabilities]):
+  graphify  →  npm install -g graphify-cli
+  codeburn  →  see getcodeburn.com
+  morph     →  get API key at morphllm.com, then run /sarthi-setup
+  firecrawl →  install the Firecrawl skill plugin
+  compound  →  install the compound-engineering skill plugin
+  codex     →  install the codex skill plugin
+  superpowers → install the superpowers skill plugin
+```
+
+Show only the missing rows. If all tools are installed, omit this section entirely.
 
 **4. Wait for the user's response:**
 - If they say `skip N [N...]` — mark those tools as disabled for the session. Apply vanilla Claude fallback for their intent categories.
@@ -608,9 +628,54 @@ When explaining a concept or correcting a misunderstanding:
 **Intent logging**
 Routed cases are logged automatically via the PostToolUse hook on the Skill tool — no action needed.
 
-For vanilla Claude fallback only, log the miss manually:
+For vanilla Claude fallback only, log the miss with the user's phrase (truncated to 120 chars):
 ```bash
-echo "{\"ts\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",\"routed_to\":\"unrouted\"}" >> ~/.claude/.sarthi-intent-log.jsonl
+python3 -c "
+import json, os
+from datetime import datetime, timezone
+entry = json.dumps({'ts': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'), 'routed_to': 'unrouted', 'phrase': 'USER_PHRASE'})
+open(os.path.expanduser('~/.claude/.sarthi-intent-log.jsonl'), 'a').write(entry + '\n')
+" 2>/dev/null || true
+```
+
+Replace `USER_PHRASE` with the actual user message, stripped of newlines and truncated to 120 chars.
+
+**Auto-propose after 3 unrouted hits:** After writing the entry, immediately check whether this phrase has now accumulated 3 entries:
+```bash
+python3 -c "
+import json, os, re
+path = os.path.expanduser('~/.claude/.sarthi-intent-log.jsonl')
+try:
+    entries = [json.loads(l) for l in open(path) if '\"unrouted\"' in l]
+    phrase = 'USER_PHRASE'[:120]
+    def norm(s): return re.sub(r'\W+', ' ', s.lower()).strip()
+    target = norm(phrase)
+    similar = [e for e in entries if e.get('routed_to') == 'unrouted' and norm(e.get('phrase', '')) == target]
+    print(len(similar))
+except:
+    print(0)
+" 2>/dev/null || echo "0"
+```
+
+If the count is **exactly 3** (fire once at the threshold, not repeatedly above it):
+Present inline without waiting for "sarthi learn":
+
+> "This phrase has come up 3 times without routing: **[USER_PHRASE]**
+> Should I add it as a routing signal?
+> Suggested intent: [your best inference from the phrase]
+> Signal words to catch it: [2–3 suggested keywords]
+> [y] Add to routing  [n] Skip"
+
+If [y]: update the Signal line in the matching intent in Step 2 of this SKILL.md and sync to `~/sarthi/skills/sarthi/SKILL.md`. Confirm: "Signal added — this phrase will route automatically in future sessions."
+
+If [n]: append a `rejected_proposal` entry to the intent log and proceed:
+```bash
+python3 -c "
+import json, os
+from datetime import datetime, timezone
+entry = json.dumps({'ts': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'), 'event': 'rejected_proposal', 'phrase': 'USER_PHRASE'})
+open(os.path.expanduser('~/.claude/.sarthi-intent-log.jsonl'), 'a').write(entry + '\n')
+" 2>/dev/null || true
 ```
 
 ---
@@ -655,10 +720,12 @@ The PostToolUse hook surfaces every Write/Edit to the preview panel. Look at the
 
 **Trigger:** "sarthi learn", "sarthi missed", "you should have used", "why didn't you use", "review intent log"
 
-When triggered:
+**Also fires automatically** when any unrouted phrase accumulates exactly 3 entries in the intent log — no manual trigger needed (see Intent logging in Step 4).
+
+When triggered manually:
 1. Read `~/.claude/.sarthi-intent-log.jsonl`
-2. Group `"unrouted"` entries by phrase similarity — these are routing misses
-3. For each cluster, propose a signal word and the intent it maps to
+2. Group `"unrouted"` entries by normalised phrase (lowercase, collapse whitespace, strip punctuation)
+3. For any cluster not already proposed (no matching `rejected_proposal` entry with the same normalised phrase), propose a signal word and the intent it maps to
 4. Present proposals to the user — approve or reject each
 5. On approval, update the Signal line in the matching intent in Step 2 of this SKILL.md and sync the change to `~/sarthi/skills/sarthi/SKILL.md`
 
