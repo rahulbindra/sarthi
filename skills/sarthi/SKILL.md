@@ -484,29 +484,49 @@ Use these chains proactively — don't wait for the user to ask for multiple too
 | vanilla Claude | Structured ideation with pros/cons |
 
 ### Research / Web
-**Signal:** "research", "look up", "docs for", "find out", "search for", "how to", "documentation", "examples", "learn about", "what does X do", URL provided
+**Signal:** "research", "look up", "docs for", "find out", "search for", "how to", "documentation", "examples", "learn about", "what does X do", "research this for me", "autonomous research", "researcher", "researcher agent", "run researcher", "research brief", URL provided
 
 Before routing to firecrawl or WebFetch, run this check:
 ```bash
 ls ~/wikis/ 2>/dev/null && echo "wikis:exist" || echo "wikis:none"
+[ -f ~/.claude/skills/researcher/SKILL.md ] && echo "researcher:installed" || echo "researcher:missing"
 ```
 
-**If `wikis:exist`** — intercept before fetching and ask:
-> "You have wiki vaults at `~/wikis/`. Ingest this into a vault for persistent access, or just fetch it for this session?
-> [1] Ingest → [list vault names, e.g. ai-research]
-> [2] New vault — create one for this topic
-> [3] Just fetch — one-time, no wiki"
+**If `wikis:exist` AND signal is broad (topic not a specific one-shot URL fetch)**:
 
-- If [1]: route to `/sarthi-wiki` → `wiki ingest` with the URL/file as the source. Firecrawl scrapes it first if it's a URL, then hands the content to sarthi-wiki.
-- If [2]: route to `/sarthi-wiki` → `wiki init [inferred domain]` then immediately ingest.
-- If [3]: proceed to normal fetch route below. Do not ask again this session for the same domain.
+Check whether the researcher agent is installed:
+
+- **If `researcher:installed`** — intercept and ask:
+  > "You have wiki vaults at `~/wikis/`. How do you want to handle this?
+  > [1] Ingest → existing vault [list vault names]
+  > [2] New vault — create one for this topic
+  > [3] Run researcher agent — autonomous multi-source fetch and ingest
+  > [4] Just fetch — one-time, no wiki"
+
+  - [1]: route to `/sarthi-wiki` → `wiki ingest` with the URL/file as source
+  - [2]: route to `/sarthi-wiki` → `wiki init [inferred domain]` then ingest
+  - [3]: route to `/researcher` — autonomous agent handles search, scoring, and ingest
+  - [4]: proceed to normal fetch route below. Do not ask again this session for same domain.
+
+- **If `researcher:missing`** — intercept and ask (3 options, no researcher):
+  > "You have wiki vaults at `~/wikis/`. Ingest this into a vault for persistent access, or just fetch it for this session?
+  > [1] Ingest → [list vault names]
+  > [2] New vault — create one for this topic
+  > [3] Just fetch — one-time, no wiki"
 
 **If `wikis:none`** — proceed to normal fetch route without interrupting.
 
 | Available | Route |
 |-----------|-------|
+| researcher installed | `/researcher` for autonomous multi-source research |
 | firecrawl | `/firecrawl-search` or `/firecrawl-scrape` |
 | vanilla Claude | WebFetch on provided URLs |
+
+**Researcher agent not installed:**
+```
+Not installed (optional — adds autonomous multi-source research):
+  researcher → mkdir -p ~/.claude/skills/researcher && cp ~/sarthi/skills/researcher/SKILL.md ~/.claude/skills/researcher/SKILL.md
+```
 
 ### Wiki / Knowledge Base
 **Signal:** "build a wiki", "llm wiki", "second brain", "personal wiki", "knowledge base", "karpathy wiki", "ingest this", "ingest document", "add to my wiki", "add to wiki", "query my wiki", "wiki query", "wiki ingest", "wiki lint", "wiki status", "wiki init", "sarthi wiki", "wiki link", "knowledge graph for"
