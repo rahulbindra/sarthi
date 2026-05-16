@@ -68,7 +68,12 @@ ls ~/wikis/ 2>/dev/null && echo "wikis:exist" || echo "wikis:none"
 - No `--vault` + one vault exists at `~/wikis/` → use it, confirm with narration: "Targeting vault: ~/wikis/<name>"
 - No `--vault` + multiple vaults → ask which one:
   > "Which vault should this research go into? [list vault names]"
-- No `--vault` + no vaults → offer: "No wiki vault found. Create one now? Run `wiki init <domain>` first, then re-run researcher."
+- No `--vault` + no vaults → infer a domain slug from the brief (e.g. "transformer architectures" → `transformer-architectures`), create the vault inline:
+  ```bash
+  mkdir -p ~/wikis/<domain-slug>/raw ~/wikis/<domain-slug>/wiki
+  touch ~/wikis/<domain-slug>/wiki/index.md ~/wikis/<domain-slug>/wiki/log.md
+  ```
+  Write `~/wikis/<domain-slug>/CLAUDE.md` using the sarthi-wiki template. Narrate: "No vault found — created ~/wikis/<domain-slug>/ for this research." Then continue with that vault as the target.
 
 ### 1.3 Generate session ID and init status object
 
