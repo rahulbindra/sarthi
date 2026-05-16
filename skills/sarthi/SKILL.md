@@ -275,6 +275,8 @@ If enabled — invoke `sarthi-model-advisor`. It scores task complexity and sugg
 
 > If Morph is available, note it will handle applying the generated UI code faster.
 
+> **Screenshot rule:** When the user provides a screenshot for UI implementation, implement one screen or one clearly bounded component per task. If the prompt references multiple screens or features from a single image, ask: "Which screen should we start with?" Do not implement multiple screens in a single session without explicit scoping.
+
 ### Review / PR
 **Signal:** "review", "PR", "pull request", "check my code", "before I ship", "feedback", "sanity check", "looks good?", "critique", "assess", "evaluate", "is this right"
 
@@ -439,7 +441,7 @@ This ensures updated routing rules and pre-routing checks take effect immediatel
 
 ## Step 3: Cost Guard (every task)
 
-Before starting **any** task, check six things:
+Before starting **any** task, run these checks:
 
 **1. Deliverable named?**
 
@@ -495,9 +497,8 @@ Use `mcp__morph-mcp__edit_file` for every file change in this task. Do not mix E
 If the task is primarily investigation or review and Codex is installed:
 > "This looks like a good candidate for parallel Codex review — want me to dispatch it for an independent second opinion?"
 
-**6. Retry guard**
-If the same fix approach fails twice — stop:
-> "Same approach failed twice. Let's step back and reconsider before trying again."
+**6. Two-retry hard stop**
+If the same fix approach fails twice — stop immediately. Do not attempt a third time. Say: "Same approach failed twice. Let me reconsider before continuing." Then restate the problem from scratch and propose a different strategy. Ask the user to confirm before proceeding.
 
 **7. Karpathy pre-flight** (for any non-trivial coding task)
 
@@ -534,6 +535,12 @@ Use the actual `correction_type`: `assumption`, `scope`, or `success_criteria`.
 This check is interactive — internal self-assessment alone doesn't count. If you skip asking the user and just proceed, you have not done this check.
 
 Skip this check for trivial tasks (typo fixes, obvious one-liners).
+
+**8. One project per session**
+If the user asks about a second codebase or project in the same session, stop and say: "This is a different project — start a fresh session to keep context clean and costs low." Do not read, edit, or reference files from a second project in the same session.
+
+**9. Compact before context overflow**
+When a session grows large (many features implemented, long history, multiple large files read), proactively say: "This session is getting long — run /compact now to avoid a context overflow and keep the next task cheaper." Do this before the user hits the limit, not after.
 
 ---
 
