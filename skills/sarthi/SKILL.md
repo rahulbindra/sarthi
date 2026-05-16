@@ -486,6 +486,23 @@ Use these chains proactively — don't wait for the user to ask for multiple too
 ### Research / Web
 **Signal:** "research", "look up", "docs for", "find out", "search for", "how to", "documentation", "examples", "learn about", "what does X do", URL provided
 
+Before routing to firecrawl or WebFetch, run this check:
+```bash
+ls ~/wikis/ 2>/dev/null && echo "wikis:exist" || echo "wikis:none"
+```
+
+**If `wikis:exist`** — intercept before fetching and ask:
+> "You have wiki vaults at `~/wikis/`. Ingest this into a vault for persistent access, or just fetch it for this session?
+> [1] Ingest → [list vault names, e.g. ai-research]
+> [2] New vault — create one for this topic
+> [3] Just fetch — one-time, no wiki"
+
+- If [1]: route to `/sarthi-wiki` → `wiki ingest` with the URL/file as the source. Firecrawl scrapes it first if it's a URL, then hands the content to sarthi-wiki.
+- If [2]: route to `/sarthi-wiki` → `wiki init [inferred domain]` then immediately ingest.
+- If [3]: proceed to normal fetch route below. Do not ask again this session for the same domain.
+
+**If `wikis:none`** — proceed to normal fetch route without interrupting.
+
 | Available | Route |
 |-----------|-------|
 | firecrawl | `/firecrawl-search` or `/firecrawl-scrape` |
