@@ -122,7 +122,6 @@ if [ -d "$PLUGIN_TMP/firecrawl-src/skills" ]; then
   cp -r "$PLUGIN_TMP/firecrawl-src/skills/." "$HOME/.claude/skills/"
   echo "✓ firecrawl installed from GitHub"
 elif [ -f "$PLUGIN_TMP/firecrawl-src/.claude-plugin/marketplace.json" ]; then
-  # Plugin-style repo — copy skills from root
   SOURCE=$(jq -r '.plugins[0].source // "./"' "$PLUGIN_TMP/firecrawl-src/.claude-plugin/marketplace.json")
   cp -r "$PLUGIN_TMP/firecrawl-src/$SOURCE/skills/." "$HOME/.claude/skills/" 2>/dev/null || \
   cp -r "$PLUGIN_TMP/firecrawl-src/skills/." "$HOME/.claude/skills/" 2>/dev/null
@@ -259,7 +258,35 @@ Continue to Step 5.
 
 ### Step 5 — Install Morph MCP (optional)
 
-If Morph is already configured in `~/.claude.json`, skip this step silently and set `morph_status = configured_with_key` or `configured_no_key` based on whether the existing entry has an API key.
+**First: check for an existing Morph API key across all locations:**
+```bash
+# 1. From environment
+printenv MORPH_API_KEY 2>/dev/null
+
+# 2. From shell profiles (fixed sed — use double-quote string to handle single-quote stripping)
+grep -h "MORPH_API_KEY" ~/.zshrc ~/.zprofile ~/.bashrc ~/.bash_profile ~/.profile 2>/dev/null \
+  | grep -v "^#" | head -1 \
+  | sed "s/.*MORPH_API_KEY[=:][\"'[:space:]]*//" | tr -d "\"'"
+
+# 3. From existing ~/.claude.json env field
+jq -r '.mcpServers["morph-mcp"].env.MORPH_API_KEY // empty' ~/.claude.json 2>/dev/null
+
+# 4. From existing ~/.claude.json args array (Morph stores key as --api-key <value>)
+jq -r '
+  .mcpServers["morph-mcp"].args
+  | if . then
+      . as $args
+      | indices("--api-key")
+      | if length > 0 then $args[.[0]+1] else empty end
+    else empty end
+' ~/.claude.json 2>/dev/null
+```
+Use the first non-empty value found as `found_key`.
+
+If Morph is already configured in `~/.claude.json`:
+- If `found_key` is set: set `morph_status = configured_with_key`. **Do not rewrite the entry** — preserve it as-is.
+- If `found_key` is empty: set `morph_status = configured_no_key`. **Do not rewrite** — preserve it as-is.
+- Skip to Step 6 in both cases.
 
 If NOT configured, ask the user using `AskUserQuestion`:
 
@@ -268,22 +295,6 @@ If NOT configured, ask the user using `AskUserQuestion`:
 > [s] Skip — I'll do it later
 
 If **[s]**: set `morph_status = skipped`. Continue to Step 6.
-
-If **[y]**:
-
-**1. Check for an existing Morph API key:**
-```bash
-# From environment
-printenv MORPH_API_KEY 2>/dev/null
-
-# From shell profiles
-grep -h "MORPH_API_KEY" ~/.zshrc ~/.zprofile ~/.bashrc ~/.bash_profile ~/.profile 2>/dev/null \
-  | grep -v "^#" | head -1 | sed 's/.*MORPH_API_KEY[=:]["\x27 ]*//' | tr -d '"'"'"
-
-# From existing ~/.claude.json entry (if partially configured)
-jq -r '.mcpServers["morph-mcp"].env.MORPH_API_KEY // empty' ~/.claude.json 2>/dev/null
-```
-Use the first non-empty value found as `found_key`.
 
 **2. Configure `~/.claude.json`:**
 ```bash
