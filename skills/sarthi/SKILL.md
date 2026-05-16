@@ -630,7 +630,57 @@ When a session grows large (many features implemented, long history, multiple la
   open(os.path.expanduser('~/.claude/.sarthi-intent-log.jsonl'), 'a').write(entry + '\n')
   " 2>/dev/null || true
   ```
-  Replace `CHOSEN_INTENT` and `ORIGINAL_PHRASE` with the actual values. These entries are distinct from normal routed entries (`source: "clarification"`) and feed `sarthi-learn`'s phrase-to-intent promotion flow.
+  Replace `CHOSEN_INTENT` and `ORIGINAL_PHRASE` with the actual values.
+
+  **Auto-write to routing overrides at 5 clarifications:** After logging, check whether this phrase has been clarified to the same intent 5 or more times:
+  ```bash
+  python3 -c "
+  import json, os, re
+  path = os.path.expanduser('~/.claude/.sarthi-intent-log.jsonl')
+  try:
+      entries = [json.loads(l) for l in open(path) if '\"clarification\"' in l]
+      def norm(s): return re.sub(r'\W+', ' ', s.lower()).strip()
+      matches = [e for e in entries
+                 if e.get('source') == 'clarification'
+                 and norm(e.get('phrase', '')) == norm('ORIGINAL_PHRASE')
+                 and e.get('routed_to') == 'CHOSEN_INTENT']
+      print(len(matches))
+  except:
+      print(0)
+  " 2>/dev/null || echo "0"
+  ```
+
+  If count >= 5: write directly to `~/.claude/.sarthi-routing-overrides.json` without asking — the user has confirmed this mapping 5 times, no further confirmation needed:
+  ```bash
+  python3 -c "
+  import json, os, re
+  from datetime import datetime, timezone
+  path = os.path.expanduser('~/.claude/.sarthi-routing-overrides.json')
+  try:
+      d = json.load(open(path))
+  except:
+      d = {'version': 1, 'overrides': []}
+  def norm(s): return re.sub(r'\W+', ' ', s.lower()).strip()
+  # Skip if already in overrides
+  already = any(o.get('normalised') == norm('ORIGINAL_PHRASE') for o in d['overrides'])
+  if not already:
+      d['overrides'].append({
+          'phrase': 'ORIGINAL_PHRASE',
+          'normalised': norm('ORIGINAL_PHRASE'),
+          'intent': 'CHOSEN_INTENT',
+          'skill': 'CHOSEN_SKILL',
+          'added': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+          'source': 'clarification-learned'
+      })
+      json.dump(d, open(path, 'w'), indent=2)
+      print('added')
+  else:
+      print('exists')
+  " 2>/dev/null || true
+  ```
+  If added: note silently in your response — "Routing learned: '[phrase]' → [intent]." No interruption needed.
+  Replace `CHOSEN_SKILL` with the skill name invoked for `CHOSEN_INTENT`.
+
 - **No tools**: use vanilla Claude with the same structured approach. After responding, ask once: "Should I have routed this to a specific tool? [tool name or n]" — if yes, log the phrase and trigger sarthi-learn to propose adding it as a signal.
 
 Keep announcements tight:

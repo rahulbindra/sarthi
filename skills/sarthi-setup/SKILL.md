@@ -54,7 +54,7 @@ For each missing tool, show a one-line install hint below the table:
 | Tool | Install hint |
 |------|-------------|
 | graphify | `npm install -g graphify-cli` (see github.com/janwilmake/graphify) |
-| codeburn | see getcodeburn.com |
+| codeburn | `npm install -g codeburn` |
 | morph | get API key at morphllm.com — Step 5 below will configure it |
 | firecrawl | install the Firecrawl skill plugin |
 | compound-engineering | install the compound-engineering skill plugin |
@@ -80,7 +80,10 @@ npm install -g graphify-cli 2>&1
 Confirm success or surface the error. If npm is unavailable: "npm required — install Node.js from nodejs.org first, then re-run /sarthi-setup."
 
 **codeburn:**
-Show: "Visit **getcodeburn.com** for install instructions. Once `codeburn` is on your PATH, re-run `/sarthi-setup` to confirm detection."
+```bash
+npm install -g codeburn 2>&1
+```
+Confirm success or surface the error. If npm is unavailable: "npm required — install Node.js from nodejs.org first, then re-run /sarthi-setup."
 
 **morph (MCP):**
 Show: "Morph needs an API key — skipping to Step 5 which handles this interactively." (Step 5 of this setup already covers the full Morph MCP configuration flow.)
