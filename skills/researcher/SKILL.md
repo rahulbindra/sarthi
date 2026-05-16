@@ -35,6 +35,7 @@ If `youtube-transcript-api` is missing: narrate "youtube-transcript-api not foun
 
 ```
 researcher "<brief>" [--vault <path>] [--threshold 6] [--cap 5] [--budget 20] [--timeout 15]
+researcher list
 researcher stop <agent_id>
 ```
 
@@ -47,6 +48,7 @@ researcher stop <agent_id>
 | `--budget` | 20 | Maximum sources to check before stopping |
 | `--timeout` | 15 | Hard timeout in minutes |
 | `--every` | — | Cron expression or shorthand (e.g. `daily`, `"0 9 * * 1"`) for recurring runs |
+| `list` | — | Show status of all researcher runs (running, complete, stopped) |
 
 ---
 
@@ -485,10 +487,52 @@ To run two directions simultaneously in Cowork: open two Cowork cards and invoke
 
 ---
 
+## `researcher list` — Status Dashboard
+
+When the user runs `researcher list`, read all status files and render a table:
+
+```bash
+ls ~/.researcher-status-*.json 2>/dev/null
+```
+
+For each file, parse the JSON and extract the 7 display fields. Then render:
+
+```
+AGENT ID          BRIEF                              STATUS      KEPT  CHECKED  VAULT                    ELAPSED
+res-1747384200    LLM context window techniques      complete    5     18       ~/wikis/ai-research      4m 12s
+res-1747390000    AI safety papers                   running     2     7        ~/wikis/ai-safety        1m 44s
+res-1747391500    transformer quantization           timed-out   3     20       ~/wikis/ml-research      15m 00s
+```
+
+**Formatting rules:**
+- Truncate `brief` to 35 chars with `…` if longer
+- Truncate vault path to the last two path components (e.g. `~/wikis/ai-research`)
+- Convert `elapsed_time` (seconds) to `Xm Ys` format
+- Status coloring (use plain text — no ANSI codes): `running` → prefix `▶`, `complete` → `✓`, `stopped` → `■`, `timed-out` → `⏱`, `stuck` → `!`
+- Sort by elapsed_time descending (longest-running first)
+
+**If no status files found:**
+```
+No researcher runs found. Start one with: researcher "<brief>"
+```
+
+**After the table**, if any agents show `status: running`, append:
+```
+To stop a running agent: researcher stop <agent_id>
+```
+
+**Cleanup note:** Status files persist after runs complete. To remove old entries:
+```bash
+rm ~/.researcher-status-res-<id>.json
+```
+
+---
+
 ## Stop Command Reference
 
 | Command | Effect |
 |---------|--------|
+| `researcher list` | Show status table for all runs |
 | `researcher stop <agent_id>` | Creates `~/.researcher-stop-<agent_id>` — agent finishes current operation then stops |
 | `researcher stop --recurring <agent_id>` | Cancels the associated scheduled task (if one exists) |
 
