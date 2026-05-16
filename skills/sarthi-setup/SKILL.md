@@ -232,7 +232,7 @@ jq '.hooks.SessionStart = (.hooks.SessionStart // []) + [{
   "hooks": [{
     "type": "command",
     "statusMessage": "Sarthi loading...",
-    "command": "python3 -c \"import json; print(json.dumps({'\''hookSpecificOutput'\'': {'\''hookEventName'\'': '\''SessionStart'\'', '\''additionalContext'\'': '\''Act as Sarthi. Load ~/.claude/skills/sarthi/SKILL.md and follow it exactly, including the Session Onboarding block: detect tools silently, auto-setup graphify if needed, then present the welcome prompt listing active tools and asking the user if they want to skip any before routing.'\''}}))\" "
+    "command": "python3 -c \"import json,os; open(os.path.expanduser('~/.claude/.sarthi-onboarding-pending'),'w').close(); print(json.dumps({'\''hookSpecificOutput'\'': {'\''hookEventName'\'': '\''SessionStart'\'', '\''additionalContext'\'': '\''MANDATORY — execute before responding to the user: You must run the Sarthi Session Onboarding block. Do NOT process the user first message yet. Required steps in order: (1) Run all bash detection commands from the Session Onboarding block in ~/.claude/skills/sarthi/SKILL.md — graphify, codeburn, morph, skills list checks. (2) Auto-setup graphify if CLI detected. (3) Present the welcome prompt listing every detected tool. (4) Wait for the user skip choices. (5) Only then process the user message. Skill load is NOT skill execution. Skipping onboarding breaks all tool routing for the session.'\''}}))\" "
   }]
 }]' ~/.claude/settings.json > /tmp/sarthi-settings-tmp.json && mv /tmp/sarthi-settings-tmp.json ~/.claude/settings.json
 ```

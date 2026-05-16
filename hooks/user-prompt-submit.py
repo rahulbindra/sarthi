@@ -4,12 +4,31 @@ Sarthi UserPromptSubmit hook.
 Runs inline session monitor + model advisor assessments before every response.
 Outputs results directly — not a request to Claude, but a completed assessment.
 """
-import sys, json, os
+import sys, json, os, time
 
 data = json.load(sys.stdin)
 prompt = data.get('prompt', '')
 prompt_lower = prompt.lower().strip()
 messages = []
+
+# ── Onboarding guard ─────────────────────────────────────────────────────────
+# SessionStart touches .sarthi-onboarding-pending. If it's <120s old this is
+# the first prompt of the session — remind Claude to run onboarding first.
+pending_path = os.path.expanduser('~/.claude/.sarthi-onboarding-pending')
+if os.path.exists(pending_path):
+    age = time.time() - os.path.getmtime(pending_path)
+    if age < 120:
+        messages.insert(0,
+            '🚨 SARTHI ONBOARDING REQUIRED — do this before processing the user message:\n'
+            '1. Run all bash detection commands from the Session Onboarding block in\n'
+            '   ~/.claude/skills/sarthi/SKILL.md (graphify, codeburn, morph, skills checks)\n'
+            '2. Auto-setup graphify if CLI is detected\n'
+            '3. Present the welcome prompt listing every detected tool\n'
+            '4. Wait for skip choices\n'
+            'Then — and only then — process the user message.\n'
+            'Skill load is NOT skill execution. This fires once per session.'
+        )
+        os.remove(pending_path)
 
 # ── Session Monitor ──────────────────────────────────────────────────────────
 if os.path.exists(os.path.expanduser('~/.claude/.sarthi-session-monitor-enabled')):
