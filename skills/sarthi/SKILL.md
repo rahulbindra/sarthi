@@ -72,6 +72,20 @@ When the user types **"sarthi setup new"**:
 - On [s]: skip silently
 - Confirm what was enabled at the end
 
+**1e. Auto-load product brief (if present):**
+```bash
+[ -f docs/pm/PRODUCT_BRIEF.md ] && echo "brief:exists" || echo "brief:none"
+```
+If `brief:exists` — grep the brief for the current sprint goal:
+```bash
+grep -A1 "Current sprint goal" docs/pm/PRODUCT_BRIEF.md 2>/dev/null | tail -1
+```
+Store in working context as `active_sprint_goal`. Add one line to the welcome prompt directly below the tools list:
+```
+Active sprint: [current sprint goal from brief]
+```
+This removes the need to manually paste /goal at session start. If no sprint goal found, skip silently.
+
 **2. Auto-setup graphify** (if CLI present):
 - No graph → run `graphify extract .` silently in background
 - Graph exists → run `graphify update .` silently
@@ -295,6 +309,36 @@ cat ~/.claude/.sarthi-routing-overrides.json 2>/dev/null || echo '{"version":1,"
 Normalise the user's prompt (lowercase, collapse whitespace, strip non-alphanumeric). Check each override's `normalised` field for an exact match. If found, route to the `skill` specified in that entry immediately — skip the static table entirely.
 
 If no match — fall through to the static routing table below.
+
+---
+
+### Multi-tool orchestration chains (when 2+ tools available)
+
+When multiple tools are detected, prefer these chains over single-tool dispatch:
+
+**Debug chain** (graphify + ce-debug + codex + morph):
+1. `graphify query "..."` to map affected modules, callers, and data flow
+2. `/ce-debug` with graphify context passed in as starting point
+3. If codex installed: offer parallel dispatch — "Want a Codex second opinion running in parallel?"
+4. morph applies the fix if 3+ files are affected
+
+**Build chain** (ce-plan + graphify + ce-work + morph):
+1. `/ce-plan` to scope deliverable, identify files, define success criteria
+2. `graphify query "..."` to surface existing patterns, conventions, and dependencies to follow
+3. `/ce-work` with plan + graphify context inline; morph for all edits touching 3+ files
+
+**Review chain** (ce-code-review + codex):
+1. `/ce-code-review` for structured review
+2. Immediately offer: "Want me to dispatch Codex for a parallel independent review?" — both can run simultaneously
+
+**Navigation chain** (graphify + targeted reads):
+1. `graphify query "..."` always first — no exceptions
+2. Read only the 2–4 files graphify cites — do not read beyond what's cited
+3. If graphify finds nothing, fall back to `grep -r "query" src/ -l` then read top 3 results
+
+Use these chains proactively — don't wait for the user to ask for multiple tools. If the task type matches and the tools are present, the chain is the right route.
+
+---
 
 ### Build / Implement
 **Signal:** "build", "implement", "add", "create", "make", "write", "develop", "scaffold", "wire up", "integrate", "extend", "set up", "generate", "new feature"
@@ -851,3 +895,36 @@ Keep the log unbounded — it is the source of truth for routing improvement ove
 
 **[No tools installed] "How does auth work?"**
 → `grep -r "auth\|login\|session" src/ -l` → read key files → explain
+
+### Vanilla Claude — structured fallbacks (when no tools installed)
+
+When vanilla Claude is the only option, these structured approaches replace open-ended assistance. Each is a prescriptive sequence, not "do your best":
+
+**Build (vanilla):**
+1. State the deliverable in one sentence — confirm with the user before touching any file
+2. List every file that will be created or modified; read them all before the first edit
+3. Write a brief pseudocode outline for each change; confirm scope is correct
+4. Implement file by file, verify each change before moving to the next
+
+**Debug (vanilla):**
+1. Collect: exact error message, full stack trace, reproduction steps
+2. State one root cause hypothesis explicitly before any investigation — "My hypothesis is X"
+3. Grep for the failing symbol; read the function, its callers, and its callees
+4. Propose one targeted fix; state exactly what it changes and why it addresses the hypothesis
+5. After applying: give a concrete verification step — "Run X to confirm the fix"
+
+**Codebase Navigation (vanilla):**
+1. `grep -r "query" src/ -l` to locate relevant files first — never read blind
+2. Read the top 2–3 most relevant results only; stop once you have enough to answer
+3. Synthesise the answer directly — no "I'd need to read more files" if the answer is in what you've read
+
+**Review (vanilla):**
+Structured pass order — never combine:
+1. Correctness: logic errors, off-by-one, null dereference, edge cases
+2. Security: input validation, auth checks, injection vectors, sensitive data exposure
+3. Style: dead code, naming, duplication — only after correctness and security pass
+
+**Refactor (vanilla):**
+1. Grep for every call site of what's being changed — list them all before touching anything
+2. State the invariant that must hold after the refactor (e.g. "all callers still compile, behaviour unchanged")
+3. Change one site at a time; verify the invariant holds after each change

@@ -40,6 +40,27 @@ If updating: read the existing file, use it as context, and skip questions the f
 
 ---
 
+## Phase 0b — Express mode
+
+Before starting the full 7-question interview, check whether express mode applies.
+
+**Express mode triggers** — any of these means skip to the 2-question path:
+- User's message already describes the problem, user, and core action clearly in one go
+- User says "quick brief", "fast path", "just start", "skip the interview", "express", "I know what I want"
+- The idea is a well-known product type (todo app, dashboard, API wrapper) where discovery adds little value
+
+**If express mode applies** — ask exactly 2 questions (one at a time via AskUserQuestion):
+
+Q1: "Describe the problem and who has it in one paragraph — specific enough that we could test whether we've solved it."
+
+Q2: "What does done look like in 4 weeks? Give me 1–3 measurable outcomes."
+
+Then skip directly to Phase 2 synthesis. Infer persona, design principles, constraints, and scope from the two answers. Mark every inferred field in the brief with `[inferred — review me]` so the user knows what to validate.
+
+**If express mode does NOT apply** — proceed to Phase 1 full interview below.
+
+---
+
 ## Phase 1 — Discovery Interview
 
 Ask the following questions one at a time. Adapt the phrasing naturally — don't read them verbatim if the conversation has already covered the answer.
@@ -251,6 +272,28 @@ Paste this into Claude Code at the start of any session to keep Claude
 anchored to your product context, sprint goal, and SMART objectives.
 Run /sarthi-pm and choose "Plan next sprint(s)" when you're ready to advance.
 ```
+
+**Immediately after presenting the /goal statement, offer implementation handoff:**
+
+Load `AskUserQuestion` via `ToolSearch` with `select:AskUserQuestion`, then ask:
+
+> "Brief is ready. What would you like to do next?"
+
+Options:
+- Start Sprint 0 now — plan and begin Sprint 0 immediately
+- Save and come back later — I'll use the /goal statement when I'm ready
+- Run /ce-strategy first — produce a formal STRATEGY.md before building
+
+**If "Start Sprint 0 now":**
+- Read Sprint 0 deliverables from the brief's sprint breakdown
+- If compound-engineering installed: invoke `/ce-plan` with the Sprint 0 goal and deliverables as input, then immediately invoke `/ce-work` to begin implementation. Pass the full /goal statement as session context.
+- If compound-engineering not installed: write Sprint 0 tasks as a numbered checklist and start implementing the first task now.
+
+**If "Save and come back later":**
+Confirm with: "Brief saved. Paste the /goal statement above at the start of your next session to load this context." End.
+
+**If "Run /ce-strategy first":**
+Invoke `/ce-strategy` with the product brief content as context. End.
 
 ---
 
