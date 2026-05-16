@@ -12,7 +12,7 @@ Run this skill once after installing Sarthi. It configures everything automatica
 ## What this does
 
 1. Detects missing Sarthi-compatible tools and installs what it can automatically
-2. Adds all Sarthi hooks to `~/.claude/settings.json` (SessionStart, PostToolUse, UserPromptSubmit)
+2. Adds all Sarthi hooks to `~/.claude/settings.json` (SessionStart, PreToolUse, PostToolUse, UserPromptSubmit)
 3. Auto-enables all three advisors (prompt optimizer, session monitor, model advisor)
 4. Auto-installs a global pre-commit hook that scans staged files for hardcoded secrets
 5. Installs codeburn menubar (if codeburn is installed)
@@ -230,7 +230,7 @@ For each hook that is NOT already present, merge it into `~/.claude/settings.jso
 ```bash
 mkdir -p ~/.claude/.sarthi-hooks
 HOOKS_SRC="$(cd "$(dirname "$0")/../.." && pwd)/hooks"
-for f in session-start.py post-tool-bash.py post-tool-read.py post-tool-edit.py user-prompt-submit.py; do
+for f in session-start.py pre-tool-agent.py post-tool-bash.py post-tool-read.py post-tool-edit.py user-prompt-submit.py; do
   cp "$HOOKS_SRC/$f" ~/.claude/.sarthi-hooks/"$f"
 done
 ```
@@ -299,6 +299,14 @@ jq '.hooks.UserPromptSubmit = (.hooks.UserPromptSubmit // []) + [{
     "type": "command",
     "command": "python3 ~/.claude/.sarthi-hooks/user-prompt-submit.py 2>/dev/null || true"
   }]
+}]' ~/.claude/settings.json > /tmp/sarthi-settings-tmp.json && mv /tmp/sarthi-settings-tmp.json ~/.claude/settings.json
+```
+
+**PreToolUse hook — agent dispatch cost warning** (if not already present):
+```bash
+jq '.hooks.PreToolUse = (.hooks.PreToolUse // []) + [{
+  "matcher": "Agent",
+  "hooks": [{"type": "command", "command": "python3 ~/.claude/.sarthi-hooks/pre-tool-agent.py 2>/dev/null || true"}]
 }]' ~/.claude/settings.json > /tmp/sarthi-settings-tmp.json && mv /tmp/sarthi-settings-tmp.json ~/.claude/settings.json
 ```
 
@@ -483,6 +491,7 @@ Run self-checks and surface any failures clearly before showing the summary:
 ```bash
 jq -e '.hooks.SessionStart[]?.hooks[]?.command | select(. != null) | select(contains("sarthi"))' ~/.claude/settings.json > /dev/null 2>&1 && echo "hook:sessionstart:ok" || echo "hook:sessionstart:MISSING"
 jq -e '.hooks.PostToolUse[]? | select(.matcher == "Write|Edit") | .hooks[]?.command | select(contains("graphify"))' ~/.claude/settings.json > /dev/null 2>&1 && echo "hook:posttooluse:ok" || echo "hook:posttooluse:MISSING"
+jq -e '.hooks.PreToolUse[]? | select(.matcher == "Agent") | .hooks[]?.command | select(contains("pre-tool-agent"))' ~/.claude/settings.json > /dev/null 2>&1 && echo "hook:pretooluse:ok" || echo "hook:pretooluse:MISSING"
 jq -e '.hooks.UserPromptSubmit[]?.hooks[]?.command | select(contains("sarthi-hooks"))' ~/.claude/settings.json > /dev/null 2>&1 && echo "hook:userpromptsubmit:ok" || echo "hook:userpromptsubmit:MISSING"
 [ -f ~/.claude/.sarthi-prompt-optimizer-enabled ] && echo "advisor:ok" || echo "advisor:MISSING"
 [ -f ~/.claude/.sarthi-hooks/pre-commit ] && echo "precommit:ok" || echo "precommit:MISSING"
@@ -498,6 +507,7 @@ After completing the above, report clearly what was done and what was skipped. U
 Sarthi setup complete.
 
 ✓ SessionStart hook               — added to ~/.claude/settings.json
+✓ PreToolUse hook (agent cost)    — added to ~/.claude/settings.json
 ✓ PostToolUse hook (graphify)     — added to ~/.claude/settings.json
 ✓ PostToolUse hook (intent)       — added to ~/.claude/settings.json
 ✓ PostToolUse hook (bash/git)     — added to ~/.claude/settings.json
