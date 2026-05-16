@@ -395,6 +395,16 @@ Run the selected audit using `gh`, `git log`, `git branch`, and `grep` as approp
 
 If the user requests a category **not in this list** — run it as best you can, then log it to `~/.claude/.sarthi-intent-log.jsonl` with `routed_to: "git-audit-unknown"` so sarthi-learn can propose adding it to the menu in future.
 
+### Persona Testing
+**Signal:** "run persona tests", "sarthi test", "test my app", "persona test", "test personas", "run tests", "app feedback", "persona feedback", "test as users", "browser test"
+
+| Available | Route |
+|-----------|-------|
+| sarthi-test | Invoke `sarthi-test` skill |
+| vanilla Claude | Explain that sarthi-test is not installed. Suggest: "Add the sarthi-test skill by pulling the latest Sarthi update." |
+
+Sub-commands route directly: `sarthi test feedback --persona <name> --note "..."` → feedback capture. `sarthi test setup` → launchd plist generation.
+
 ### Project Audit
 **Signal:** "sarthi audit", "run audit", "audit my project", "security audit", "privacy audit", "vulnerability audit", "check for keys", "check for secrets", "ethical hacker audit", "legal audit", "usability audit", "attribution audit"
 
