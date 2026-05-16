@@ -273,14 +273,28 @@ Run the following three checks in sequence. Each is independently opt-in and ski
 
 **These checks apply before every user task — including mid-session follow-ups that feel like obvious continuations. "The next step feels obvious" is not a reason to skip. If you find yourself routing without running these, stop and run them first.**
 
-**Check 0 — Post-compact session cost guard (fires once, on first prompt only):**
+**Check 0 — Post-compact session cost guard + counter bootstrap (fires once, on first prompt only):**
 
 Read the session counter:
 ```bash
 cat ~/.claude/.sarthi-session-counter 2>/dev/null || echo 0
 ```
 
-If counter == 1 AND the context contains `"This session is being continued from a previous conversation"`:
+**0a — Compact-resume detection (runs before anything else on first prompt):**
+
+If the conversation context contains `"This session is being continued from a previous conversation"` AND counter == 0 (SessionStart hook never fired):
+
+- Bootstrap the counter to 1 so Check 1 and subsequent checks work correctly:
+  ```bash
+  echo 1 > ~/.claude/.sarthi-session-counter
+  ```
+- Run Check 2 (prompt optimizer) and Check 3 (model advisor) immediately for this first prompt — they were silently skipped for every prompt before this one
+- Narrate once, non-blocking: `⚠️ Resumed session detected — Sarthi checks re-activated.`
+- Continue to 0b
+
+**0b — Cost guard (fires when counter == 1):**
+
+If counter == 1 AND context contains `"This session is being continued from a previous conversation"`:
 
 Check whether the task references prior work — signals: "continue", "implement what we discussed", "the plan", "that fix", "from before", "as we said". If yes → proceed silently, the context is needed.
 
