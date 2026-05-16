@@ -207,9 +207,6 @@ Just describe what you want in plain language. Sarthi detects intent and routes 
 
 "Add push notifications to the home screen"
 → Routing to /ce-plan to scope this, then /ce-work.
-
-"The payment flow is broken after the last merge"
-→ Routing to /ce-debug. What's the error or stack trace?
 ```
 
 **Refactoring & bulk edits**
@@ -228,9 +225,6 @@ Just describe what you want in plain language. Sarthi detects intent and routes 
 
 "Where is the push notification logic?"
 → [runs: graphify query "push notification logic"] — found in src/services/notifications.ts.
-
-"What calls the checkout function?"
-→ [runs: graphify path "checkout" "<callers>"]
 ```
 
 **Frontend & UI**
@@ -249,9 +243,6 @@ Just describe what you want in plain language. Sarthi detects intent and routes 
 
 "Ship what I have"
 → Routing to /ce-commit-push-pr.
-
-"Open a PR with a proper description"
-→ Routing to /ce-commit-push-pr.
 ```
 
 **Research & strategy**
@@ -261,9 +252,6 @@ Just describe what you want in plain language. Sarthi detects intent and routes 
 
 "What should we build next quarter?"
 → Routing to /ce-strategy.
-
-"Brainstorm ways to improve onboarding retention"
-→ Routing to /ce-brainstorm.
 ```
 
 **Cost & session hygiene**
@@ -315,9 +303,7 @@ Enable during `/sarthi-setup` or: `touch ~/.claude/.sarthi-model-advisor-enabled
 | Medium | Sonnet 4.6 | Multi-file features, debugging, tests, code review |
 | Complex | Opus 4.7 | Architecture, cross-system debugging, PM planning, audits |
 
-A suggestion only appears when your **current model is sub-optimal** for the task — e.g. using Opus for a typo fix, or Haiku for an architecture decision. If you're already on the right model, it stays silent.
-
-Since Claude Code model switching requires a user action, Sarthi tells you the exact `/model <id>` command to run — it can't switch automatically.
+A suggestion only appears when your **current model is sub-optimal** for the task — e.g. using Opus for a typo fix, or Haiku for an architecture decision. Since Claude Code model switching requires a user action, Sarthi tells you the exact `/model <id>` command to run — it can't switch automatically.
 
 **How it looks:**
 ```
@@ -341,8 +327,6 @@ Commands: `/sarthi-model-advisor status`, `reset`, `off`, `clear`
 ## ✏️ Prompt Optimizer (opt-in)
 
 Before routing any task, Sarthi can assess your prompt for token-inefficiency signals and suggest a tighter reword — reducing clarifying round trips and wasted work.
-
-**Off by default.** Enable during `/sarthi-setup` or any time with `/sarthi-prompt-optimizer`.
 
 ### Inefficiency signals it detects
 
@@ -425,11 +409,7 @@ Once a brief exists, Sarthi can guide you through planning the next 1–N sprint
 
 | Phase | What happens |
 |-------|-------------|
-| **Read context** | Reads `docs/pm/PRODUCT_BRIEF.md` — identifies completed sprints and the next sprint to plan |
-| **Confirm position** | Asks how many sprints to plan (1, 2, 3, or a specific sprint) |
-| **Interview per sprint** | Goal, deliverables, end date, blockers — one question at a time |
-| **Update brief** | Writes new sprint entries to the Sprint Breakdown section of `PRODUCT_BRIEF.md` |
-| **Output /goal** | Produces a ready-to-paste `/goal` block for the sprint you're about to start, plus saved blocks for upcoming sprints |
+Reads `docs/pm/PRODUCT_BRIEF.md`, confirms how many sprints to plan, then interviews you per sprint (goal, deliverables, end date, blockers). Writes new entries to the Sprint Breakdown section and emits a ready-to-paste `/goal` block for each sprint.
 
 ### /goal Integration
 
@@ -491,13 +471,19 @@ Installed during `/sarthi-setup`, this global git hook scans staged files for ha
 - To bypass intentionally: `git commit --no-verify`
 - To disable globally: `git config --global --unset core.hooksPath`
 
-Enable during `/sarthi-setup` or install manually:
+Enable during `/sarthi-setup`.
+
+<details>
+<summary>Manual install (if you prefer to configure the hook yourself)</summary>
+
 ```bash
 mkdir -p ~/.claude/.sarthi-hooks
 # write hook script to ~/.claude/.sarthi-hooks/pre-commit (see sarthi-setup/SKILL.md)
 chmod +x ~/.claude/.sarthi-hooks/pre-commit
 git config --global core.hooksPath ~/.claude/.sarthi-hooks
 ```
+
+</details>
 
 ## 🏆 Tools & Full Credits
 
