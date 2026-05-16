@@ -210,6 +210,8 @@ Do not announce these runs. Complete them before responding to the user's first 
 
 Run the following three checks in sequence. Each is independently opt-in and skips silently if not enabled. Routing always proceeds after all checks complete.
 
+**These checks apply before every user task — including mid-session follow-ups that feel like obvious continuations. "The next step feels obvious" is not a reason to skip. If you find yourself routing without running these, stop and run them first.**
+
 **Check 1 — Session monitor:**
 ```bash
 [ -f ~/.claude/.sarthi-session-monitor-enabled ] && echo "enabled" || echo "disabled"
