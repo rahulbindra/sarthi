@@ -53,13 +53,13 @@ For each missing tool, show a one-line install hint below the table:
 
 | Tool | Install hint |
 |------|-------------|
-| graphify | `npm install -g graphify-cli` (see github.com/janwilmake/graphify) |
+| graphify | `pip install graphifyy` (note: two y's — PyPI package) |
 | codeburn | `npm install -g codeburn` |
 | morph | get API key at morphllm.com — Step 5 below will configure it |
-| firecrawl | install the Firecrawl skill plugin |
-| compound-engineering | install the compound-engineering skill plugin |
-| codex | install the codex skill plugin |
-| superpowers | install the superpowers skill plugin |
+| firecrawl | `/plugin install firecrawl@claude-plugins-official` |
+| compound-engineering | `/plugin install compound-engineering@compound-engineering-plugin` |
+| codex | `/plugin install codex@openai-codex` |
+| superpowers | `/plugin install superpowers@claude-plugins-official` |
 
 If all tools are already installed, show: "All Sarthi tools detected — no gaps found." and skip to Step 1.
 
@@ -75,9 +75,9 @@ For each selected tool, attempt setup in this order:
 
 **graphify:**
 ```bash
-npm install -g graphify-cli 2>&1
+pip install graphifyy 2>&1
 ```
-Confirm success or surface the error. If npm is unavailable: "npm required — install Node.js from nodejs.org first, then re-run /sarthi-setup."
+Note: two y's — this is the PyPI package (`graphifyy`), not an npm package. Confirm success or surface the error. If pip is unavailable: "pip required — install Python 3 from python.org first, then re-run /sarthi-setup."
 
 **codeburn:**
 ```bash
@@ -89,15 +89,22 @@ Confirm success or surface the error. If npm is unavailable: "npm required — i
 Show: "Morph needs an API key — skipping to Step 5 which handles this interactively." (Step 5 of this setup already covers the full Morph MCP configuration flow.)
 
 **firecrawl / compound-engineering / codex / superpowers (skill plugins):**
-For each selected skill plugin, show:
+For each selected skill plugin, show the exact install command:
+
+| Plugin | Install command |
+|--------|----------------|
+| compound-engineering | `/plugin install compound-engineering@compound-engineering-plugin` |
+| firecrawl | `/plugin install firecrawl@claude-plugins-official` |
+| codex | `/plugin install codex@openai-codex` |
+| superpowers | `/plugin install superpowers@claude-plugins-official` |
+
+Show:
 ```
-[tool] is a Claude Code skill plugin.
-To install:
-  1. Find the plugin's GitHub repo (search: "claude-code [tool] skill")
-  2. Copy its skills/[tool]/ directory to ~/.claude/skills/[tool]/
-  3. Re-run /sarthi-setup to confirm detection.
+Run this command in your Claude Code terminal:
+  /plugin install [tool]@[source]
+
+Then re-run /sarthi-setup to confirm detection.
 ```
-(Install paths vary per plugin — this step cannot automate them without known repo URLs.)
 
 After attempting all selected installs, re-run the Step 0 detection checks and show an updated gap table so the user sees what is now ready.
 
