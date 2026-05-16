@@ -148,12 +148,11 @@ codeburn menubar
 
 ## 🔄 Updating
 
-```
-/plugin install sarthi
-/reload-plugins
+```bash
+curl -fsSL https://raw.githubusercontent.com/rahulbindra/sarthi/main/install.sh | bash
 ```
 
-This pulls the latest skill files from GitHub. Your hooks (`~/.claude/settings.json`) and Morph MCP config (`~/.claude.json`) are untouched — no need to re-run `/sarthi-setup`.
+Re-runs the same installer — idempotent, overwrites skill files with the latest, never touches hooks or Morph MCP config. No need to re-run `/sarthi-setup`.
 
 ## ✨ What Sarthi Does
 
