@@ -27,10 +27,10 @@ Before configuring anything, check which Sarthi-compatible tools are installed v
 command -v graphify > /dev/null 2>&1 && echo "graphify:installed" || echo "graphify:missing"
 command -v codeburn > /dev/null 2>&1 && echo "codeburn:installed" || echo "codeburn:missing"
 jq -e '.mcpServers["morph-mcp"]' ~/.claude.json > /dev/null 2>&1 && echo "morph:configured" || echo "morph:missing"
-[ -d ~/.claude/skills/firecrawl ] && echo "firecrawl:installed" || echo "firecrawl:missing"
-[ -d ~/.claude/skills/compound-engineering ] && echo "compound:installed" || echo "compound:missing"
-[ -d ~/.claude/skills/codex ] && echo "codex:installed" || echo "codex:missing"
-[ -d ~/.claude/skills/superpowers ] && echo "superpowers:installed" || echo "superpowers:missing"
+([ -d ~/.claude/skills/firecrawl-agent ] || [ -d ~/.claude/plugins/cache/claude-plugins-official/firecrawl ]) && echo "firecrawl:installed" || echo "firecrawl:missing"
+([ -d ~/.claude/skills/ce-work ] || [ -d ~/.claude/plugins/cache/compound-engineering-plugin/compound-engineering ]) && echo "compound:installed" || echo "compound:missing"
+([ -d ~/.claude/skills/codex-cli-runtime ] || [ -d ~/.claude/plugins/cache/openai-codex/codex ]) && echo "codex:installed" || echo "codex:missing"
+([ -d ~/.claude/skills/dispatching-parallel-agents ] || [ -d ~/.claude/plugins/cache/claude-plugins-official/superpowers ]) && echo "superpowers:installed" || echo "superpowers:missing"
 ```
 
 Show this table — mark each row ✓ (installed) or ✗ (missing):
@@ -88,25 +88,72 @@ Confirm success or surface the error. If npm is unavailable: "npm required — i
 **morph (MCP):**
 Show: "Morph MCP will be auto-configured in Step 5 — no API key needed for the free plan."
 
-**firecrawl / compound-engineering / codex / superpowers (skill plugins):**
-For all selected skill plugins, show ALL their install commands together in one block:
-
+**compound-engineering:**
+Copy skills from the local plugin cache (already downloaded when you ran `/plugin install` previously), falling back to a direct GitHub clone:
+```bash
+CACHE="$HOME/.claude/plugins/cache/compound-engineering-plugin/compound-engineering"
+if [ -d "$CACHE" ]; then
+  LATEST=$(ls -t "$CACHE" | head -1)
+  cp -r "$CACHE/$LATEST/skills/." "$HOME/.claude/skills/"
+  echo "✓ compound-engineering installed from cache (v$LATEST)"
+else
+  TMP=$(mktemp -d)
+  git clone --depth=1 https://github.com/EveryInc/compound-engineering-plugin.git "$TMP/ce" 2>&1 | tail -2
+  cp -r "$TMP/ce/skills/." "$HOME/.claude/skills/"
+  rm -rf "$TMP"
+  echo "✓ compound-engineering installed from GitHub"
+fi
 ```
-Run these in your Claude Code terminal (one per line):
 
-  /plugin install compound-engineering@compound-engineering-plugin
-  /plugin install firecrawl@claude-plugins-official
-  /plugin install codex@openai-codex
-  /plugin install superpowers@claude-plugins-official
-
-(Only run the ones you selected above.)
-
-Type "done" when finished — setup will continue automatically.
+**firecrawl:**
+```bash
+CACHE="$HOME/.claude/plugins/cache/claude-plugins-official/firecrawl"
+if [ -d "$CACHE" ]; then
+  LATEST=$(ls -t "$CACHE" | head -1)
+  cp -r "$CACHE/$LATEST/skills/." "$HOME/.claude/skills/"
+  echo "✓ firecrawl installed from cache (v$LATEST)"
+else
+  TMP=$(mktemp -d)
+  git clone --depth=1 https://github.com/anthropics/claude-plugins-official.git "$TMP/cp" 2>&1 | tail -2
+  cp -r "$TMP/cp/firecrawl/skills/." "$HOME/.claude/skills/"
+  rm -rf "$TMP"
+  echo "✓ firecrawl installed from GitHub"
+fi
 ```
 
-Wait for the user to type "done" (or any acknowledgment). Then re-run the Step 0 detection checks silently and continue — do NOT ask the user to re-run `/sarthi-setup`.
+**codex:**
+```bash
+CACHE="$HOME/.claude/plugins/cache/openai-codex/codex"
+if [ -d "$CACHE" ]; then
+  LATEST=$(ls -t "$CACHE" | head -1)
+  cp -r "$CACHE/$LATEST/skills/." "$HOME/.claude/skills/"
+  echo "✓ codex installed from cache (v$LATEST)"
+else
+  TMP=$(mktemp -d)
+  git clone --depth=1 https://github.com/openai/codex-plugin-cc.git "$TMP/codex" 2>&1 | tail -2
+  cp -r "$TMP/codex/skills/." "$HOME/.claude/skills/"
+  rm -rf "$TMP"
+  echo "✓ codex installed from GitHub"
+fi
+```
 
-After all selected installs, re-run the Step 0 detection checks and show an updated gap table so the user sees what is now ready.
+**superpowers:**
+```bash
+CACHE="$HOME/.claude/plugins/cache/claude-plugins-official/superpowers"
+if [ -d "$CACHE" ]; then
+  LATEST=$(ls -t "$CACHE" | head -1)
+  cp -r "$CACHE/$LATEST/skills/." "$HOME/.claude/skills/"
+  echo "✓ superpowers installed from cache (v$LATEST)"
+else
+  TMP=$(mktemp -d)
+  git clone --depth=1 https://github.com/anthropics/claude-plugins-official.git "$TMP/cp" 2>&1 | tail -2
+  cp -r "$TMP/cp/superpowers/skills/." "$HOME/.claude/skills/"
+  rm -rf "$TMP"
+  echo "✓ superpowers installed from GitHub"
+fi
+```
+
+After all selected installs complete, re-run the Step 0 detection checks and show an updated gap table so the user sees what is now ready.
 
 Continue to Step 0c regardless of outcomes.
 
@@ -123,8 +170,8 @@ grep -r "ANTHROPIC_API_KEY" ~/.zshrc ~/.zprofile ~/.bashrc ~/.bash_profile ~/.pr
 - If graphify is present and key is NOT set → ask once using `AskUserQuestion`:
 
   > "Graphify needs ANTHROPIC_API_KEY to build the knowledge graph (Claude Code's OAuth key doesn't carry over). Add it to your shell profile now?"
-  > [y] Yes — paste my key
-  > [s] Skip — I'll add it manually later
+  > [y] Yes — paste my key now
+  > [l] Add later — I'll set it up manually (graphify won't build graphs until then)
 
 Store the user's choice as `api_key_choice`. Continue to Step 1.
 
