@@ -240,14 +240,60 @@ The SessionStart hook command should begin with:
 
 Continue to Step 5.
 
-### Step 5 — Note Morph MCP status (informational only)
+### Step 5 — Install Morph MCP (optional)
 
-Check if Morph is already configured in `~/.claude.json`:
+If Morph is already configured in `~/.claude.json`, skip this step silently and set `morph_status = configured_with_key` or `configured_no_key` based on whether the existing entry has an API key.
+
+If NOT configured, ask the user using `AskUserQuestion`:
+
+> "Morph MCP enables fast bulk code edits. Set it up now?"
+> [y] Yes — set it up
+> [s] Skip — I'll do it later
+
+If **[s]**: set `morph_status = skipped`. Continue to Step 6.
+
+If **[y]**:
+
+**1. Check for an existing Morph API key:**
 ```bash
-jq -e '.mcpServers["morph-mcp"]' ~/.claude.json > /dev/null 2>&1 && echo "configured" || echo "missing"
+# From environment
+printenv MORPH_API_KEY 2>/dev/null
+
+# From shell profiles
+grep -h "MORPH_API_KEY" ~/.zshrc ~/.zprofile ~/.bashrc ~/.bash_profile ~/.profile 2>/dev/null \
+  | grep -v "^#" | head -1 | sed 's/.*MORPH_API_KEY[=:]["\x27 ]*//' | tr -d '"'"'"
+
+# From existing ~/.claude.json entry (if partially configured)
+jq -r '.mcpServers["morph-mcp"].env.MORPH_API_KEY // empty' ~/.claude.json 2>/dev/null
+```
+Use the first non-empty value found as `found_key`.
+
+**2. Configure `~/.claude.json`:**
+```bash
+[ -f ~/.claude.json ] || echo '{"mcpServers":{}}' > ~/.claude.json
 ```
 
-Store the result as `morph_status`. Do not ask the user anything. Continue to Step 6.
+If `found_key` is set:
+```bash
+jq --arg key "$found_key" '.mcpServers["morph-mcp"] = {
+  "type": "stdio",
+  "command": "npx",
+  "args": ["--prefer-offline", "-y", "@morphllm/morphmcp@latest", "--api-key", $key],
+  "env": { "MORPH_API_KEY": $key, "DISABLED_TOOLS": "" }
+}' ~/.claude.json > /tmp/sarthi-claude-tmp.json && mv /tmp/sarthi-claude-tmp.json ~/.claude.json
+```
+Set `morph_status = configured_with_key`.
+
+If `found_key` is empty:
+```bash
+jq '.mcpServers["morph-mcp"] = {
+  "type": "stdio",
+  "command": "npx",
+  "args": ["--prefer-offline", "-y", "@morphllm/morphmcp@latest"],
+  "env": { "DISABLED_TOOLS": "" }
+}' ~/.claude.json > /tmp/sarthi-claude-tmp.json && mv /tmp/sarthi-claude-tmp.json ~/.claude.json
+```
+Set `morph_status = configured_no_key`.
 
 ### Step 6 — Auto-enable Sarthi advisors
 
@@ -347,7 +393,7 @@ codeburn menubar &
 
 ### Step 9 — Confirm to the user
 
-After completing the above, report clearly what was done and what was skipped (already configured). Use this format:
+After completing the above, report clearly what was done and what was skipped. Use this format:
 
 ```
 Sarthi setup complete.
@@ -356,24 +402,26 @@ Sarthi setup complete.
 ✓ PostToolUse hook (graphify)  — added to ~/.claude/settings.json
 ✓ PostToolUse hook (intent)   — added to ~/.claude/settings.json
 ✓ UserPromptSubmit hook       — added to ~/.claude/settings.json
+✓ Morph MCP                   — configured (key found automatically)
 ✓ Prompt optimizer            — enabled
 ✓ Session monitor             — enabled
 ✓ Model advisor               — enabled
 ✓ Pre-commit scan             — installed (~/.claude/.sarthi-hooks/pre-commit)
 ✓ codeburn menubar            — launched
 
-Configure when ready:
-  Morph MCP       — get a free key at morphllm.com, then re-run /sarthi-setup
-  ANTHROPIC_API_KEY (graphify) — export ANTHROPIC_API_KEY=sk-ant-... >> ~/.zprofile
-
 Restart Claude Code (or open a new session) for the hooks to take effect.
 ```
 
-If `morph_status` is `configured`, replace the Morph line with:
-  `✓ Morph MCP                   — already configured`
+Morph MCP line variants:
+- `morph_status = configured_with_key` → `✓ Morph MCP — configured (key found automatically)`
+- `morph_status = configured_no_key` → `✓ Morph MCP — configured (no key found — get one free at morphllm.com, then add: export MORPH_API_KEY=sk-... >> ~/.zprofile and re-run /sarthi-setup)`
+- `morph_status = skipped` → `  Morph MCP — skipped (re-run /sarthi-setup to add)`
+- `morph_status = already configured` → `✓ Morph MCP — already configured`
 
-If `api_key_status` is `present`, replace the ANTHROPIC_API_KEY line with:
-  `✓ ANTHROPIC_API_KEY           — already configured`
+If `api_key_status` is `absent` and graphify is present, add this line under "Restart Claude Code...":
+```
+  ANTHROPIC_API_KEY (for graphify graph builds) — export ANTHROPIC_API_KEY=sk-ant-... >> ~/.zprofile
+```
 
 Other status variants:
 - Already configured before setup → `— already configured`
