@@ -11,7 +11,7 @@ Run this skill once after installing Sarthi. It configures everything automatica
 
 1. Detects missing Sarthi-compatible tools and installs what it can automatically
 2. Adds all Sarthi hooks to `~/.claude/settings.json` (SessionStart, PostToolUse, UserPromptSubmit)
-3. Auto-configures Morph MCP server in `~/.claude.json` (free plan — no API key required)
+3. Configures Morph MCP server in `~/.claude.json` (requires a free API key from morphllm.com)
 4. Auto-enables all three advisors (prompt optimizer, session monitor, model advisor)
 5. Auto-installs a global pre-commit hook that scans staged files for hardcoded secrets
 6. Optionally sets `ANTHROPIC_API_KEY` in your shell profile (needed for graphify graph building)
@@ -55,7 +55,7 @@ For each missing tool, show a one-line install hint below the table:
 |------|-------------|
 | graphify | `pip install graphifyy` (note: two y's — PyPI package) |
 | codeburn | `npm install -g codeburn` |
-| morph | Step 5 will auto-configure it — free plan, no API key needed |
+| morph | free API key required — get one at morphllm.com, Step 5 configures it |
 | firecrawl | `/plugin install firecrawl@claude-plugins-official` |
 | compound-engineering | `/plugin install compound-engineering@compound-engineering-plugin` |
 | codex | `/plugin install codex@openai-codex` |
@@ -255,7 +255,7 @@ If `api_key_choice` is "y":
   ```
 - Confirm: "Added to <profile path>. Run `source <profile path>` or open a new terminal for it to take effect."
 
-### Step 5 — Auto-configure Morph MCP server (free plan)
+### Step 5 — Configure Morph MCP server
 
 Check if Morph is already configured in `~/.claude.json`:
 ```bash
@@ -264,21 +264,42 @@ jq -e '.mcpServers["morph-mcp"]' ~/.claude.json > /dev/null 2>&1 && echo "config
 
 If already configured, skip this step silently.
 
-If NOT configured, auto-configure it now — no API key required for the free plan:
+If NOT configured, ask the user:
 
+```
+Morph enables fast bulk code edits via MCP — useful for refactors and renames across many files.
+A free API key is required (the server starts without one, but edits fail silently).
+
+Would you like to set it up now?
+  [y] Yes — paste your Morph API key and I'll configure it (get one free at morphllm.com)
+  [s] Skip — I'll set it up manually later
+
+Your choice (y/s):
+```
+
+If the user chooses **y**:
+- Ask: "Paste your Morph API key (get one free at morphllm.com):"
+- Ensure `~/.claude.json` exists before writing:
 ```bash
 [ -f ~/.claude.json ] || echo '{"mcpServers":{}}' > ~/.claude.json
+```
+- Add the MCP server entry to `~/.claude.json` using jq:
+```bash
 jq '.mcpServers["morph-mcp"] = {
   "type": "stdio",
   "command": "npx",
-  "args": ["--prefer-offline", "-y", "@morphllm/morphmcp@latest"],
+  "args": ["--prefer-offline", "-y", "@morphllm/morphmcp@latest", "--api-key", "<key they pasted>"],
   "env": {
+    "MORPH_API_KEY": "<key they pasted>",
     "DISABLED_TOOLS": ""
   }
 }' ~/.claude.json > /tmp/sarthi-claude-tmp.json && mv /tmp/sarthi-claude-tmp.json ~/.claude.json
 ```
+- Confirm: "Morph MCP configured. Active after you restart Claude Code."
 
-Confirm: "Morph MCP configured (free plan). Active after you restart Claude Code."
+If the user chooses **s**:
+- Show: "Skipped. Get a free Morph API key at morphllm.com and re-run /sarthi-setup to add it."
+- Continue to next step.
 
 ### Step 6 — Auto-enable Sarthi advisors
 
