@@ -48,7 +48,7 @@ Sarthi is a router — it needs tools to route to. Install any combination of th
 |------|---------|----------------|
 | [compound-engineering](https://github.com/EveryInc/compound-engineering-plugin) | `/plugin install compound-engineering@compound-engineering-plugin` | Build, debug, review, ship, frontend, strategy |
 | [graphify](https://github.com/safishamsi/graphify) | `pip install graphifyy` *(note: two y's — this is the correct PyPI package name)* | Codebase knowledge graph navigation |
-| [morph](https://github.com/morphllm/morph-claude-code-plugin) | See Morph docs | Fast bulk code edits via MCP |
+| [morph](https://github.com/morphllm/morph-claude-code-plugin) | Get a free key at [morphllm.com](https://morphllm.com), then re-run `/sarthi-setup` | Fast bulk code edits via MCP |
 | [firecrawl](https://github.com/mendableai/firecrawl) | `/plugin install firecrawl@claude-plugins-official` | Web research and scraping |
 | [codex](https://github.com/openai/codex-plugin-cc) | `/plugin install codex@openai-codex` | Parallel code review |
 | [codeburn](https://github.com/getagentseal/codeburn) | `npm install -g codeburn` | Token spend analytics |
@@ -71,10 +71,20 @@ Sarthi works with any subset — or none at all. **Recommended start:** compound
 This automatically configures:
 - The **SessionStart hook** so Sarthi activates at the start of every session
 - The **PostToolUse hook** so graphify stays fresh after every code edit
+- **All three advisors** (prompt optimizer, session monitor, model advisor)
+- A **global pre-commit hook** that scans staged files for hardcoded secrets
 - **codeburn menubar** for passive background cost monitoring
-- Optionally, a **global pre-commit hook** that scans staged files for hardcoded secrets before every git commit
 
-> ⚠️ **Restart Claude Code after setup.** On next launch, you'll see the Sarthi welcome prompt automatically — that confirms hooks are active. If you don't see it, re-run `/sarthi-setup`.
+### Configure later (no setup required)
+
+**Morph MCP** — get a free API key at [morphllm.com](https://morphllm.com), then re-run `/sarthi-setup`. It will skip already-configured items and just add Morph.
+
+**ANTHROPIC_API_KEY** (needed for graphify to build the knowledge graph):
+```bash
+export ANTHROPIC_API_KEY=sk-ant-... >> ~/.zprofile   # or ~/.zshrc
+source ~/.zprofile
+```
+Get a key at [console.anthropic.com/keys](https://console.anthropic.com/keys). Only the first graph build costs tokens — all subsequent refreshes are free.
 
 <details>
 <summary>Manual setup (if you prefer to configure hooks yourself)</summary>

@@ -11,11 +11,13 @@ Run this skill once after installing Sarthi. It configures everything automatica
 
 1. Detects missing Sarthi-compatible tools and installs what it can automatically
 2. Adds all Sarthi hooks to `~/.claude/settings.json` (SessionStart, PostToolUse, UserPromptSubmit)
-3. Configures Morph MCP server in `~/.claude.json` (requires a free API key from morphllm.com)
-4. Auto-enables all three advisors (prompt optimizer, session monitor, model advisor)
-5. Auto-installs a global pre-commit hook that scans staged files for hardcoded secrets
-6. Optionally sets `ANTHROPIC_API_KEY` in your shell profile (needed for graphify graph building)
-7. Installs codeburn menubar (if codeburn is installed)
+3. Auto-enables all three advisors (prompt optimizer, session monitor, model advisor)
+4. Auto-installs a global pre-commit hook that scans staged files for hardcoded secrets
+5. Installs codeburn menubar (if codeburn is installed)
+
+> **Configure later (no setup required):**
+> - Morph MCP — get a free key at morphllm.com, then re-run `/sarthi-setup`
+> - ANTHROPIC_API_KEY for graphify — `export ANTHROPIC_API_KEY=sk-ant-... >> ~/.zprofile`
 
 ## Steps
 
@@ -144,7 +146,7 @@ After all selected installs complete, re-run the Step 0 detection checks and sho
 
 Continue to Step 0c regardless of outcomes.
 
-### Step 0c — Confirm ANTHROPIC_API_KEY (only if graphify is installed or was just installed)
+### Step 0c — Note ANTHROPIC_API_KEY status (informational only)
 
 Check if graphify is present and if the key is already in the shell profile:
 ```bash
@@ -152,15 +154,7 @@ command -v graphify > /dev/null 2>&1 && echo "graphify:present" || echo "graphif
 grep -r "ANTHROPIC_API_KEY" ~/.zshrc ~/.zprofile ~/.bashrc ~/.bash_profile ~/.profile 2>/dev/null | grep -v "^Binary" | grep -q . && echo "key:present" || echo "key:absent"
 ```
 
-- If graphify is absent → skip this step silently.
-- If graphify is present and key is already set → skip this step silently.
-- If graphify is present and key is NOT set → ask once using `AskUserQuestion`:
-
-  > "Graphify needs ANTHROPIC_API_KEY to build the knowledge graph (Claude Code's OAuth key doesn't carry over). Add it to your shell profile now?"
-  > [y] Yes — paste my key now
-  > [l] Add later — I'll set it up manually (graphify won't build graphs until then)
-
-Store the user's choice as `api_key_choice`. Continue to Step 1.
+Store the result as `api_key_status` (`present` or `absent`). Do not ask the user anything. Continue to Step 1.
 
 ---
 
@@ -242,64 +236,18 @@ jq '.hooks.UserPromptSubmit = (.hooks.UserPromptSubmit // []) + [{
 The SessionStart hook command should begin with:
 `rm -f ~/.claude/.sarthi-session-counter ~/.claude/.sarthi-session-warned 2>/dev/null; `
 
-### Step 4 — Set ANTHROPIC_API_KEY (if chosen in Step 0c)
+### Step 4 — (skipped — ANTHROPIC_API_KEY is configured later by the user)
 
-If `api_key_choice` is not "y" or Step 0c was skipped → skip this step silently.
+Continue to Step 5.
 
-If `api_key_choice` is "y":
-- Ask: "Paste your ANTHROPIC_API_KEY (starts with sk-ant-):"
-- Detect the active shell profile in this order: `~/.zprofile`, `~/.zshrc`, `~/.bash_profile`, `~/.bashrc`, `~/.profile` — use the first one that exists
-- Append to that file:
-  ```bash
-  export ANTHROPIC_API_KEY=<key they pasted>
-  ```
-- Confirm: "Added to <profile path>. Run `source <profile path>` or open a new terminal for it to take effect."
-
-### Step 5 — Configure Morph MCP server
+### Step 5 — Note Morph MCP status (informational only)
 
 Check if Morph is already configured in `~/.claude.json`:
 ```bash
 jq -e '.mcpServers["morph-mcp"]' ~/.claude.json > /dev/null 2>&1 && echo "configured" || echo "missing"
 ```
 
-If already configured, skip this step silently.
-
-If NOT configured, ask the user:
-
-```
-Morph enables fast bulk code edits via MCP — useful for refactors and renames across many files.
-A free API key is required (the server starts without one, but edits fail silently).
-
-Would you like to set it up now?
-  [y] Yes — paste your Morph API key and I'll configure it (get one free at morphllm.com)
-  [s] Skip — I'll set it up manually later
-
-Your choice (y/s):
-```
-
-If the user chooses **y**:
-- Ask: "Paste your Morph API key (get one free at morphllm.com):"
-- Ensure `~/.claude.json` exists before writing:
-```bash
-[ -f ~/.claude.json ] || echo '{"mcpServers":{}}' > ~/.claude.json
-```
-- Add the MCP server entry to `~/.claude.json` using jq:
-```bash
-jq '.mcpServers["morph-mcp"] = {
-  "type": "stdio",
-  "command": "npx",
-  "args": ["--prefer-offline", "-y", "@morphllm/morphmcp@latest", "--api-key", "<key they pasted>"],
-  "env": {
-    "MORPH_API_KEY": "<key they pasted>",
-    "DISABLED_TOOLS": ""
-  }
-}' ~/.claude.json > /tmp/sarthi-claude-tmp.json && mv /tmp/sarthi-claude-tmp.json ~/.claude.json
-```
-- Confirm: "Morph MCP configured. Active after you restart Claude Code."
-
-If the user chooses **s**:
-- Show: "Skipped. Get a free Morph API key at morphllm.com and re-run /sarthi-setup to add it."
-- Continue to next step.
+Store the result as `morph_status`. Do not ask the user anything. Continue to Step 6.
 
 ### Step 6 — Auto-enable Sarthi advisors
 
@@ -408,22 +356,28 @@ Sarthi setup complete.
 ✓ PostToolUse hook (graphify)  — added to ~/.claude/settings.json
 ✓ PostToolUse hook (intent)   — added to ~/.claude/settings.json
 ✓ UserPromptSubmit hook       — added to ~/.claude/settings.json
-✓ Morph MCP (free plan)       — configured in ~/.claude.json
 ✓ Prompt optimizer            — enabled
 ✓ Session monitor             — enabled
 ✓ Model advisor               — enabled
 ✓ Pre-commit scan             — installed (~/.claude/.sarthi-hooks/pre-commit)
-✓ ANTHROPIC_API_KEY           — added to ~/.zprofile
 ✓ codeburn menubar            — launched
+
+Configure when ready:
+  Morph MCP       — get a free key at morphllm.com, then re-run /sarthi-setup
+  ANTHROPIC_API_KEY (graphify) — export ANTHROPIC_API_KEY=sk-ant-... >> ~/.zprofile
 
 Restart Claude Code (or open a new session) for the hooks to take effect.
 ```
 
-Status variants:
+If `morph_status` is `configured`, replace the Morph line with:
+  `✓ Morph MCP                   — already configured`
+
+If `api_key_status` is `present`, replace the ANTHROPIC_API_KEY line with:
+  `✓ ANTHROPIC_API_KEY           — already configured`
+
+Other status variants:
 - Already configured before setup → `— already configured`
 - codeburn not installed → `— codeburn not installed, skipped`
-- ANTHROPIC_API_KEY skipped by user → `— skipped (add manually: export ANTHROPIC_API_KEY=sk-ant-... in your shell profile)`
-- ANTHROPIC_API_KEY already in profile → `— already configured`
 - Advisor already enabled before setup → `— already enabled`
 - Pre-commit scan already installed → `— already installed`
 
