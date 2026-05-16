@@ -268,6 +268,35 @@ Run the following three checks in sequence. Each is independently opt-in and ski
 
 **These checks apply before every user task — including mid-session follow-ups that feel like obvious continuations. "The next step feels obvious" is not a reason to skip. If you find yourself routing without running these, stop and run them first.**
 
+**Check 0 — Post-compact session cost guard (fires once, on first prompt only):**
+
+Read the session counter:
+```bash
+cat ~/.claude/.sarthi-session-counter 2>/dev/null || echo 0
+```
+
+If counter == 1 AND the context contains `"This session is being continued from a previous conversation"`:
+
+Check whether the task references prior work — signals: "continue", "implement what we discussed", "the plan", "that fix", "from before", "as we said". If yes → proceed silently, the context is needed.
+
+Otherwise (self-contained task) → surface the cost warning before routing:
+
+```
+⚠️  RESUMED SESSION: This session carries summary context from a prior compact.
+    A fresh session would cost ~60-70% less for a task this size.
+
+    Here's a self-contained prompt you can paste into a new session:
+    [generate the complete prompt — include all file paths, exact deliverable,
+     and any background the fresh session needs. Make it fully standalone.]
+
+    [y] Proceed here anyway   [n] I'll start fresh with the prompt above
+```
+
+If [y] or the user just proceeds — continue to Check 1 and route normally.
+If [n] — stop. The user will open a fresh session.
+
+This check fires once per session (counter == 1 only). Never re-fire mid-session.
+
 **Check 1 — Session monitor (runs every 10th prompt):**
 
 Increment the session-scoped prompt counter and fire only when it hits a multiple of 10:
