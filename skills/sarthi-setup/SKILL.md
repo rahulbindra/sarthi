@@ -7,6 +7,8 @@ description: One-time setup for Sarthi. Automatically configures the SessionStar
 
 Run this skill once after installing Sarthi. It configures everything automatically so you never need to touch a config file manually.
 
+> **Run in a fresh Claude Code session** — this skill does significant work and can hit context limits if the session already has history. Open a new session, then run `/sarthi-setup`.
+
 ## What this does
 
 1. Detects missing Sarthi-compatible tools and installs what it can automatically
@@ -130,7 +132,16 @@ else
   echo "firecrawl:install-failed"
 fi
 ```
-If `firecrawl:install-failed`: show the git error and tell the user: `Run: /plugin marketplace add https://github.com/mendableai/firecrawl`
+If `firecrawl:install-failed`: show this prominently — do not let it get lost in surrounding output:
+
+```
+⚠️  firecrawl auto-install failed (network or repo issue).
+    Manual install required — run this after setup completes:
+
+    /plugin marketplace add https://github.com/mendableai/firecrawl
+
+    Continuing setup without firecrawl.
+```
 
 **codex:**
 ```bash
@@ -162,15 +173,31 @@ After all selected installs complete, re-run the Step 0 detection checks and sho
 
 Continue to Step 0c regardless of outcomes.
 
-### Step 0c — Note ANTHROPIC_API_KEY status (informational only)
+### Step 0c — Check ANTHROPIC_API_KEY for graphify
 
-Check if graphify is present and if the key is already in the shell profile:
+Check if graphify is present and if the key is already configured:
 ```bash
 command -v graphify > /dev/null 2>&1 && echo "graphify:present" || echo "graphify:absent"
 grep -r "ANTHROPIC_API_KEY" ~/.zshrc ~/.zprofile ~/.bashrc ~/.bash_profile ~/.profile 2>/dev/null | grep -v "^Binary" | grep -q . && echo "key:present" || echo "key:absent"
 ```
 
-Store the result as `api_key_status` (`present` or `absent`). Do not ask the user anything. Continue to Step 1.
+Store the result as `api_key_status` (`present` or `absent`).
+
+If `graphify:present` AND `key:absent`, show this warning immediately before proceeding — do not defer to the summary:
+
+```
+⚠️  graphify is installed but ANTHROPIC_API_KEY is not set.
+    Graph builds will fail silently until you add it:
+
+    echo 'export ANTHROPIC_API_KEY=sk-ant-...' >> ~/.zprofile && source ~/.zprofile
+
+    Get a key at console.anthropic.com/keys
+    Note: Claude Code uses OAuth — a separate API key is required for graphify.
+
+    Continuing setup. You can add the key later and re-run /sarthi-setup.
+```
+
+Continue to Step 1.
 
 ---
 
@@ -274,7 +301,7 @@ grep "MORPH_API_KEY" ~/.claude/morph/.env 2>/dev/null | cut -d'=' -f2 | tr -d '[
 # 4. From existing ~/.claude.json env field
 jq -r '.mcpServers["morph-mcp"].env.MORPH_API_KEY // empty' ~/.claude.json 2>/dev/null
 
-# 4. From existing ~/.claude.json args array (Morph stores key as --api-key <value>)
+# 5. From existing ~/.claude.json args array (Morph stores key as --api-key <value>)
 jq -r '
   .mcpServers["morph-mcp"].args
   | if . then
@@ -374,6 +401,10 @@ FOUND=0
 
 while IFS= read -r file; do
   [ -f "$file" ] || continue
+  # Skip documentation files — patterns in docs/comments are not real secrets
+  case "$file" in
+    *.md|*.txt|*.rst|*.adoc) continue ;;
+  esac
   result=$(grep -n \
     -e "sk-ant-" \
     -e "AKIA[0-9A-Z]\{16\}" \
@@ -422,6 +453,20 @@ If codeburn is installed and menubar is not already running:
 codeburn menubar &
 ```
 
+### Step 8b — Verify configuration
+
+Run self-checks and surface any failures clearly before showing the summary:
+
+```bash
+jq -e '.hooks.SessionStart[]?.hooks[]?.command | select(. != null) | select(contains("sarthi"))' ~/.claude/settings.json > /dev/null 2>&1 && echo "hook:sessionstart:ok" || echo "hook:sessionstart:MISSING"
+jq -e '.hooks.PostToolUse[]? | select(.matcher == "Write|Edit") | .hooks[]?.command | select(contains("graphify"))' ~/.claude/settings.json > /dev/null 2>&1 && echo "hook:posttooluse:ok" || echo "hook:posttooluse:MISSING"
+jq -e '.hooks.UserPromptSubmit[]?.hooks[]?.command | select(contains("sarthi-hooks"))' ~/.claude/settings.json > /dev/null 2>&1 && echo "hook:userpromptsubmit:ok" || echo "hook:userpromptsubmit:MISSING"
+[ -f ~/.claude/.sarthi-prompt-optimizer-enabled ] && echo "advisor:ok" || echo "advisor:MISSING"
+[ -f ~/.claude/.sarthi-hooks/pre-commit ] && echo "precommit:ok" || echo "precommit:MISSING"
+```
+
+If any check returns `MISSING`, show it as `✗` in the summary and tell the user to re-run `/sarthi-setup`.
+
 ### Step 9 — Confirm to the user
 
 After completing the above, report clearly what was done and what was skipped. Use this format:
@@ -430,7 +475,7 @@ After completing the above, report clearly what was done and what was skipped. U
 Sarthi setup complete.
 
 ✓ SessionStart hook           — added to ~/.claude/settings.json
-✓ PostToolUse hook (graphify)  — added to ~/.claude/settings.json
+✓ PostToolUse hook (graphify) — added to ~/.claude/settings.json
 ✓ PostToolUse hook (intent)   — added to ~/.claude/settings.json
 ✓ UserPromptSubmit hook       — added to ~/.claude/settings.json
 ✓ Morph MCP                   — configured (key found automatically)
@@ -440,18 +485,21 @@ Sarthi setup complete.
 ✓ Pre-commit scan             — installed (~/.claude/.sarthi-hooks/pre-commit)
 ✓ codeburn menubar            — launched
 
-Restart Claude Code (or open a new session) for the hooks to take effect.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  ⚠️  RESTART CLAUDE CODE NOW for hooks to activate.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
 Morph MCP line variants:
 - `morph_status = configured_with_key` → `✓ Morph MCP — configured (key found automatically)`
-- `morph_status = configured_no_key` → `✓ Morph MCP — configured (no key found — get one free at morphllm.com, then add: export MORPH_API_KEY=sk-... >> ~/.zprofile and re-run /sarthi-setup)`
+- `morph_status = configured_no_key` → `✓ Morph MCP — configured (no key — get one free at morphllm.com, then re-run /sarthi-setup)`
 - `morph_status = skipped` → `  Morph MCP — skipped (re-run /sarthi-setup to add)`
 - `morph_status = already configured` → `✓ Morph MCP — already configured`
 
-If `api_key_status` is `absent` and graphify is present, add this line under "Restart Claude Code...":
+If `api_key_status` is `absent` and graphify is present, add this line above the restart banner:
 ```
-  ANTHROPIC_API_KEY (for graphify graph builds) — export ANTHROPIC_API_KEY=sk-ant-... >> ~/.zprofile
+⚠️  graphify: ANTHROPIC_API_KEY not set — graph builds will fail.
+    Fix: echo 'export ANTHROPIC_API_KEY=sk-ant-...' >> ~/.zprofile && source ~/.zprofile
 ```
 
 Other status variants:

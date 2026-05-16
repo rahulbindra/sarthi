@@ -89,11 +89,26 @@ Skills added:
   - /<skill-1>
   - /<skill-2>
   ...
-
-Run /<primary-skill>-setup to complete configuration (if a setup skill exists).
 ```
 
-If a `<plugin-name>-setup` skill was installed, prompt the user to run it now.
+If a `<plugin-name>-setup` skill exists (check if `~/.claude/skills/<plugin-name>-setup/SKILL.md` was copied), show this banner — do not bury it as a footnote:
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Next step: run /<plugin-name>-setup
+  (configures hooks, advisors, and Morph MCP)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+For the `sarthi` plugin specifically, show:
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Next step: run /sarthi-setup
+  Run it in a fresh session (no prior history) so it
+  doesn't hit context limits.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
 
 ---
 

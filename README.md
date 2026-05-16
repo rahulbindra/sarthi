@@ -18,32 +18,29 @@
 
 Sarthi is a Claude Code plugin that acts as an **intelligent routing layer** for your AI development stack. Instead of remembering which tool to use when, describe what you want in plain language — Sarthi detects your intent and routes to the right tool automatically. Falls back gracefully to vanilla Claude if you don't have a tool installed.
 
-## ⚡ Quickstart
+## ⚡ Install (2 steps)
 
-**Step 0 — Bootstrap the plugin manager (one-time, run in your terminal):**
+**Step 1 — Run in your terminal:**
 ```bash
-mkdir -p ~/.claude/skills/plugin
-curl -fsSL https://raw.githubusercontent.com/rahulbindra/sarthi/main/skills/plugin/SKILL.md \
-  -o ~/.claude/skills/plugin/SKILL.md
-echo '- **plugin** (`~/.claude/skills/plugin/SKILL.md`) - Plugin manager for Claude Code. Trigger: `/plugin`' \
-  >> ~/.claude/CLAUDE.md
+curl -fsSL https://raw.githubusercontent.com/rahulbindra/sarthi/main/install.sh | bash
 ```
+This clones Sarthi, installs all skills to `~/.claude/skills/`, and registers them in `~/.claude/CLAUDE.md` — idempotent, safe to re-run.
 
-**Then inside Claude Code:**
+**Step 2 — Open Claude Code and run:**
 ```
-/plugin marketplace add https://github.com/rahulbindra/sarthi
 /sarthi-setup
 ```
+Setup configures all hooks, enables advisors, installs the pre-commit secrets scan, and wires Morph MCP if you have a key. Run in a **fresh session** (no prior history) so it doesn't hit context limits.
 
-Restart Claude Code. On next launch you'll see the Sarthi welcome prompt listing your active tools — that's it.
-
-> **Using graphify?** It needs its own `ANTHROPIC_API_KEY` (Claude Code uses OAuth, not an API key). Add it to your shell profile before running setup:
-> ```bash
-> export ANTHROPIC_API_KEY=sk-ant-...
-> ```
-> Get a key at [console.anthropic.com/keys](https://console.anthropic.com/keys). Only the first graph build costs tokens — all subsequent refreshes are free.
+> **⚠️ Restart Claude Code after setup completes** — hooks don't activate until restart.
 
 **Recommended first install:** [compound-engineering](https://github.com/EveryInc/compound-engineering-plugin) + [graphify](https://github.com/safishamsi/graphify) covers 80% of daily use.
+
+> **Using graphify?** It needs its own `ANTHROPIC_API_KEY` — Claude Code uses OAuth, but graphify calls the API directly. Add it before running setup, otherwise graph builds will fail silently:
+> ```bash
+> echo 'export ANTHROPIC_API_KEY=sk-ant-...' >> ~/.zprofile && source ~/.zprofile
+> ```
+> Get a key at [console.anthropic.com/keys](https://console.anthropic.com/keys). Only the first graph build costs tokens — all subsequent refreshes are free.
 
 ---
 
@@ -66,23 +63,18 @@ Sarthi is a router — it needs tools to route to. Install any combination of th
 
 Sarthi works with any subset — or none at all. **Recommended start:** compound-engineering + graphify.
 
-### Step 1 — Bootstrap the plugin manager (terminal, one-time)
+### Step 1 — Run in terminal
 
 ```bash
-mkdir -p ~/.claude/skills/plugin
-curl -fsSL https://raw.githubusercontent.com/rahulbindra/sarthi/main/skills/plugin/SKILL.md \
-  -o ~/.claude/skills/plugin/SKILL.md
-echo '- **plugin** (`~/.claude/skills/plugin/SKILL.md`) - Plugin manager for Claude Code. Trigger: `/plugin`' \
-  >> ~/.claude/CLAUDE.md
+curl -fsSL https://raw.githubusercontent.com/rahulbindra/sarthi/main/install.sh | bash
 ```
 
-### Step 2 — Install Sarthi (inside Claude Code)
+Clones Sarthi, installs all skills to `~/.claude/skills/`, and registers them in `~/.claude/CLAUDE.md`. Idempotent — safe to re-run.
 
-```
-/plugin marketplace add https://github.com/rahulbindra/sarthi
-```
+### Step 2 — Run setup inside Claude Code
 
-### Step 3 — Run setup (one command does everything)
+Open Claude Code in a **fresh session** (important — setup can hit context limits in a long session):
+
 ```
 /sarthi-setup
 ```
@@ -94,16 +86,23 @@ This automatically configures:
 - A **global pre-commit hook** that scans staged files for hardcoded secrets
 - **codeburn menubar** for passive background cost monitoring
 
+> **⚠️ Restart Claude Code after setup finishes** — hooks don't activate until restart.
+
 ### Configure later (no setup required)
 
-**Morph MCP** — get a free API key at [morphllm.com](https://morphllm.com), then re-run `/sarthi-setup`. It will skip already-configured items and just add Morph.
+**Morph MCP** — get a free API key at [morphllm.com](https://morphllm.com), then re-run `/sarthi-setup`. It skips already-configured items and just wires Morph.
 
-**ANTHROPIC_API_KEY** (needed for graphify to build the knowledge graph):
+**ANTHROPIC_API_KEY** (needed for graphify — Claude Code uses OAuth, graphify calls the API directly):
 ```bash
-export ANTHROPIC_API_KEY=sk-ant-... >> ~/.zprofile   # or ~/.zshrc
-source ~/.zprofile
+echo 'export ANTHROPIC_API_KEY=sk-ant-...' >> ~/.zprofile && source ~/.zprofile
 ```
-Get a key at [console.anthropic.com/keys](https://console.anthropic.com/keys). Only the first graph build costs tokens — all subsequent refreshes are free.
+Get a key at [console.anthropic.com/keys](https://console.anthropic.com/keys). Only the first graph build costs tokens.
+
+### Troubleshooting
+
+**Hooks not firing after restart?** Check `~/.claude/settings.json` — this is where Sarthi's SessionStart, PostToolUse, and UserPromptSubmit hooks live. Run `jq '.hooks' ~/.claude/settings.json` to inspect.
+
+**Morph not working?** Morph MCP is configured in `~/.claude.json` (separate from settings.json). Run `jq '.mcpServers["morph-mcp"]' ~/.claude.json` to inspect. Re-run `/sarthi-setup` to repair.
 
 <details>
 <summary>Manual setup (if you prefer to configure hooks yourself)</summary>
