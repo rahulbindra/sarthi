@@ -268,7 +268,10 @@ grep -h "MORPH_API_KEY" ~/.zshrc ~/.zprofile ~/.bashrc ~/.bash_profile ~/.profil
   | grep -v "^#" | head -1 \
   | sed "s/.*MORPH_API_KEY[=:][\"'[:space:]]*//" | tr -d "\"'"
 
-# 3. From existing ~/.claude.json env field
+# 3. From ~/.claude/morph/.env (Morph's own config directory)
+grep "MORPH_API_KEY" ~/.claude/morph/.env 2>/dev/null | cut -d'=' -f2 | tr -d '[:space:]'
+
+# 4. From existing ~/.claude.json env field
 jq -r '.mcpServers["morph-mcp"].env.MORPH_API_KEY // empty' ~/.claude.json 2>/dev/null
 
 # 4. From existing ~/.claude.json args array (Morph stores key as --api-key <value>)
