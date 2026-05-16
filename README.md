@@ -20,9 +20,20 @@ Sarthi is a Claude Code plugin that acts as an **intelligent routing layer** for
 
 ## ⚡ Quickstart
 
+**Step 0 — Bootstrap the plugin manager (one-time, run in your terminal):**
+```bash
+mkdir -p ~/.claude/skills/plugin
+curl -fsSL https://raw.githubusercontent.com/rahulbindra/sarthi/main/skills/plugin/SKILL.md \
+  -o ~/.claude/skills/plugin/SKILL.md
+```
+Then add one line to `~/.claude/CLAUDE.md`:
+```
+- **plugin** (`~/.claude/skills/plugin/SKILL.md`) - Plugin manager for Claude Code. Trigger: `/plugin`
+```
+
+**Then inside Claude Code:**
 ```
 /plugin marketplace add https://github.com/rahulbindra/sarthi
-/plugin install sarthi
 /sarthi-setup
 ```
 
@@ -57,13 +68,26 @@ Sarthi is a router — it needs tools to route to. Install any combination of th
 
 Sarthi works with any subset — or none at all. **Recommended start:** compound-engineering + graphify.
 
-### Step 1 — Install the plugin
-```
-/plugin marketplace add https://github.com/rahulbindra/sarthi
-/plugin install sarthi
+### Step 1 — Bootstrap the plugin manager (terminal, one-time)
+
+```bash
+mkdir -p ~/.claude/skills/plugin
+curl -fsSL https://raw.githubusercontent.com/rahulbindra/sarthi/main/skills/plugin/SKILL.md \
+  -o ~/.claude/skills/plugin/SKILL.md
 ```
 
-### Step 2 — Run setup (one command does everything)
+Add one line to `~/.claude/CLAUDE.md`:
+```
+- **plugin** (`~/.claude/skills/plugin/SKILL.md`) - Plugin manager for Claude Code. Trigger: `/plugin`
+```
+
+### Step 2 — Install Sarthi (inside Claude Code)
+
+```
+/plugin marketplace add https://github.com/rahulbindra/sarthi
+```
+
+### Step 3 — Run setup (one command does everything)
 ```
 /sarthi-setup
 ```
@@ -481,24 +505,6 @@ mkdir -p ~/.claude/.sarthi-hooks
 chmod +x ~/.claude/.sarthi-hooks/pre-commit
 git config --global core.hooksPath ~/.claude/.sarthi-hooks
 ```
-
-## 📁 Best Practices Templates
-
-The [`best-practices/`](best-practices/) folder contains 9 governance templates for running Claude Code efficiently on any project:
-
-| File | Purpose |
-|------|---------|
-| `CLAUDE.md` | Drop-in AI instruction file for your repo root |
-| `CURRENT_SPRINT.md` | Scope-lock for the active sprint — prevents token waste from drift |
-| `ARCHITECTURE.md` | Non-negotiable system patterns Claude must respect |
-| `DESIGN_SYSTEM.md` | Visual standards to keep UI consistent across sessions |
-| `API_PATTERNS.md` | Backend integration conventions |
-| `IMPLEMENTATION_PATTERNS.md` | Coding style and conventions |
-| `PRODUCT_PRINCIPLES.md` | UX and product decision heuristics |
-| `AI_WORKFLOW.md` | How Claude should operate within your repo |
-| `PLACEMENT_AND_USAGE_GUIDE.md` | Where each file goes and how to use it |
-
-Copy the ones you need into your project. See `PLACEMENT_AND_USAGE_GUIDE.md` for setup instructions.
 
 ## 🏆 Tools & Full Credits
 
