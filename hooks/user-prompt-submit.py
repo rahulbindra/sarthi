@@ -1,24 +1,35 @@
 #!/usr/bin/env python3
 """
 Sarthi UserPromptSubmit hook.
-Runs inline session monitor + model advisor assessments before every response.
-Outputs results directly — not a request to Claude, but a completed assessment.
+Fires before every Claude response. Checks (in order):
+  1. Onboarding guard    — first prompt of session
+  2. Pending warnings    — picked up from PostToolUse hooks (bash fail, ratio)
+  3. Session monitor     — context fill nudge (opt-in)
+  4. Model advisor       — model complexity suggestion (opt-in)
+  5. Delivery nudge      — no git commits after significant edits
 """
 import sys, json, os, time
 
 data = json.load(sys.stdin)
-prompt = data.get('prompt', '')
+prompt       = data.get('prompt', '')
 prompt_lower = prompt.lower().strip()
-messages = []
+messages     = []
 
-# ── Onboarding guard ─────────────────────────────────────────────────────────
-# SessionStart touches .sarthi-onboarding-pending. If it's <120s old this is
-# the first prompt of the session — remind Claude to run onboarding first.
+# ── Unconditional session counter ────────────────────────────────────────────
+counter_path = os.path.expanduser('~/.claude/.sarthi-session-counter')
+try:
+    count = int(open(counter_path).read().strip()) + 1
+except:
+    count = 1
+open(counter_path, 'w').write(str(count))
+
+# ── 1. Onboarding guard ──────────────────────────────────────────────────────
+# SessionStart touches .sarthi-onboarding-pending. <120s old = first prompt.
 pending_path = os.path.expanduser('~/.claude/.sarthi-onboarding-pending')
 if os.path.exists(pending_path):
     age = time.time() - os.path.getmtime(pending_path)
     if age < 120:
-        messages.insert(0,
+        messages.append(
             '🚨 SARTHI ONBOARDING REQUIRED — do this before processing the user message:\n'
             '1. Run all bash detection commands from the Session Onboarding block in\n'
             '   ~/.claude/skills/sarthi/SKILL.md (graphify, codeburn, morph, skills checks)\n'
@@ -30,17 +41,19 @@ if os.path.exists(pending_path):
         )
         os.remove(pending_path)
 
-# ── Session Monitor ──────────────────────────────────────────────────────────
+# ── 2. Pending warnings from PostToolUse hooks ───────────────────────────────
+warn_path = os.path.expanduser('~/.claude/.sarthi-pending-warning')
+try:
+    pending_warn = open(warn_path).read().strip()
+    if pending_warn:
+        messages.append(pending_warn)
+        open(warn_path, 'w').write('')  # clear after pickup
+except:
+    pass
+
+# ── 3. Session Monitor (opt-in) ──────────────────────────────────────────────
 if os.path.exists(os.path.expanduser('~/.claude/.sarthi-session-monitor-enabled')):
-    counter_path = os.path.expanduser('~/.claude/.sarthi-session-counter')
-    warned_path  = os.path.expanduser('~/.claude/.sarthi-session-warned')
-
-    try:
-        count = int(open(counter_path).read().strip()) + 1
-    except:
-        count = 1
-    open(counter_path, 'w').write(str(count))
-
+    warned_path = os.path.expanduser('~/.claude/.sarthi-session-warned')
     try:
         warned = json.loads(open(warned_path).read())
     except:
@@ -61,9 +74,8 @@ if os.path.exists(os.path.expanduser('~/.claude/.sarthi-session-monitor-enabled'
         warned['w90'] = True
         open(warned_path, 'w').write(json.dumps(warned))
 
-# ── Model Advisor ────────────────────────────────────────────────────────────
+# ── 4. Model Advisor (opt-in) ────────────────────────────────────────────────
 if os.path.exists(os.path.expanduser('~/.claude/.sarthi-model-advisor-enabled')):
-    # Check session suppression
     try:
         learnings = json.loads(open(os.path.expanduser('~/.claude/.sarthi-model-learnings.json')).read())
         rejects = learnings.get('session_consecutive_rejects', 0)
@@ -73,15 +85,12 @@ if os.path.exists(os.path.expanduser('~/.claude/.sarthi-model-advisor-enabled'))
     if rejects < 2:
         words = prompt.split()
 
-        # Skip: pure acknowledgments with no task
         pure_ack_words = {'ok','okay','got','it','thanks','i','see','makes','sense','noted',
                           'understood','sure','alright','great','perfect','yes','no','yep','nope'}
         is_pure_ack = (
             len(words) <= 5
             and all(w.lower().rstrip('.,!') in pure_ack_words for w in words)
         )
-
-        # Skip: pure factual questions with no action
         is_question_only = (
             prompt_lower.startswith(('what ', 'how ', 'why ', 'when ', 'where ', 'who ',
                                      'is ', 'does ', 'can ', 'will ', 'should '))
@@ -120,9 +129,28 @@ if os.path.exists(os.path.expanduser('~/.claude/.sarthi-model-advisor-enabled'))
                     '   Switch now if not already on Haiku: /model claude-haiku-4-5-20251001\n'
                     '   Reply [y] noted / [s] skip / [r] skip + reason'
                 )
-            # sonnet = no message (default; no switch needed)
 
-# ── Output ───────────────────────────────────────────────────────────────────
+# ── 5. Delivery nudge ────────────────────────────────────────────────────────
+# At prompt 20, if 5+ edits made but no git commits: soft check-in.
+# Fires once per session (only at count == 20).
+if count == 20:
+    try:
+        edits = int(open(os.path.expanduser('~/.claude/.sarthi-session-edits')).read().strip())
+    except:
+        edits = 0
+    try:
+        has_delivery = bool(open(os.path.expanduser('~/.claude/.sarthi-session-delivery')).read().strip())
+    except:
+        has_delivery = False
+
+    if edits >= 5 and not has_delivery:
+        messages.append(
+            f'📦 DELIVERY CHECK: {edits} file edits this session, 0 git commits.\n'
+            'Is the work ready to commit? Consider /ce-commit-push-pr or git add + commit.\n'
+            'Ignore if this is an exploration or research session.'
+        )
+
+# ── Output ────────────────────────────────────────────────────────────────────
 if messages:
     print(json.dumps({
         'hookSpecificOutput': {

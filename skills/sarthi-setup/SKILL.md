@@ -226,18 +226,27 @@ command -v codeburn > /dev/null && echo "yes" || echo "no"
 
 For each hook that is NOT already present, merge it into `~/.claude/settings.json` using `jq`.
 
-**SessionStart hook** (if missing):
+**Install all hook scripts** (copy from repo to ~/.claude/.sarthi-hooks/):
+```bash
+mkdir -p ~/.claude/.sarthi-hooks
+HOOKS_SRC="$(cd "$(dirname "$0")/../.." && pwd)/hooks"
+for f in session-start.py post-tool-bash.py post-tool-read.py post-tool-edit.py user-prompt-submit.py; do
+  cp "$HOOKS_SRC/$f" ~/.claude/.sarthi-hooks/"$f"
+done
+```
+
+**SessionStart hook** (if missing — uses script, resets all counters):
 ```bash
 jq '.hooks.SessionStart = (.hooks.SessionStart // []) + [{
   "hooks": [{
     "type": "command",
     "statusMessage": "Sarthi loading...",
-    "command": "python3 -c \"import json,os; open(os.path.expanduser('~/.claude/.sarthi-onboarding-pending'),'w').close(); print(json.dumps({'\''hookSpecificOutput'\'': {'\''hookEventName'\'': '\''SessionStart'\'', '\''additionalContext'\'': '\''MANDATORY — execute before responding to the user: You must run the Sarthi Session Onboarding block. Do NOT process the user first message yet. Required steps in order: (1) Run all bash detection commands from the Session Onboarding block in ~/.claude/skills/sarthi/SKILL.md — graphify, codeburn, morph, skills list checks. (2) Auto-setup graphify if CLI detected. (3) Present the welcome prompt listing every detected tool. (4) Wait for the user skip choices. (5) Only then process the user message. Skill load is NOT skill execution. Skipping onboarding breaks all tool routing for the session.'\''}}))\" "
+    "command": "python3 ~/.claude/.sarthi-hooks/session-start.py"
   }]
 }]' ~/.claude/settings.json > /tmp/sarthi-settings-tmp.json && mv /tmp/sarthi-settings-tmp.json ~/.claude/settings.json
 ```
 
-**PostToolUse hook** (if missing):
+**PostToolUse hook — graphify refresh** (if missing):
 ```bash
 jq '.hooks.PostToolUse = (.hooks.PostToolUse // []) + [{
   "matcher": "Write|Edit",
@@ -259,10 +268,28 @@ jq '.hooks.PostToolUse = (.hooks.PostToolUse // []) + [{
 }]' ~/.claude/settings.json > /tmp/sarthi-settings-tmp.json && mv /tmp/sarthi-settings-tmp.json ~/.claude/settings.json
 ```
 
-**Install the UserPromptSubmit hook script** (runs inline session monitor + model advisor — no longer asks Claude to invoke the skill, does the assessment itself):
+**PostToolUse hook — bash failure + git delivery tracker** (if not already present):
 ```bash
-mkdir -p ~/.claude/.sarthi-hooks
-cp "$(dirname "$0")/../../hooks/user-prompt-submit.py" ~/.claude/.sarthi-hooks/user-prompt-submit.py
+jq '.hooks.PostToolUse = (.hooks.PostToolUse // []) + [{
+  "matcher": "Bash",
+  "hooks": [{"type": "command", "command": "python3 ~/.claude/.sarthi-hooks/post-tool-bash.py 2>/dev/null || true"}]
+}]' ~/.claude/settings.json > /tmp/sarthi-settings-tmp.json && mv /tmp/sarthi-settings-tmp.json ~/.claude/settings.json
+```
+
+**PostToolUse hook — read counter** (if not already present):
+```bash
+jq '.hooks.PostToolUse = (.hooks.PostToolUse // []) + [{
+  "matcher": "Read",
+  "hooks": [{"type": "command", "command": "python3 ~/.claude/.sarthi-hooks/post-tool-read.py 2>/dev/null || true"}]
+}]' ~/.claude/settings.json > /tmp/sarthi-settings-tmp.json && mv /tmp/sarthi-settings-tmp.json ~/.claude/settings.json
+```
+
+**PostToolUse hook — edit counter + ratio warning** (if not already present):
+```bash
+jq '.hooks.PostToolUse = (.hooks.PostToolUse // []) + [{
+  "matcher": "Write|Edit",
+  "hooks": [{"type": "command", "command": "python3 ~/.claude/.sarthi-hooks/post-tool-edit.py 2>/dev/null || true"}]
+}]' ~/.claude/settings.json > /tmp/sarthi-settings-tmp.json && mv /tmp/sarthi-settings-tmp.json ~/.claude/settings.json
 ```
 
 **UserPromptSubmit hook — wire the script** (if not already present):
@@ -274,10 +301,6 @@ jq '.hooks.UserPromptSubmit = (.hooks.UserPromptSubmit // []) + [{
   }]
 }]' ~/.claude/settings.json > /tmp/sarthi-settings-tmp.json && mv /tmp/sarthi-settings-tmp.json ~/.claude/settings.json
 ```
-
-**SessionStart hook — reset session counters** (add counter reset to existing SessionStart command, if not already present — prepend to the existing command string):
-The SessionStart hook command should begin with:
-`rm -f ~/.claude/.sarthi-session-counter ~/.claude/.sarthi-session-warned 2>/dev/null; `
 
 ### Step 4 — (skipped — ANTHROPIC_API_KEY is configured later by the user)
 
@@ -474,10 +497,13 @@ After completing the above, report clearly what was done and what was skipped. U
 ```
 Sarthi setup complete.
 
-✓ SessionStart hook           — added to ~/.claude/settings.json
-✓ PostToolUse hook (graphify) — added to ~/.claude/settings.json
-✓ PostToolUse hook (intent)   — added to ~/.claude/settings.json
-✓ UserPromptSubmit hook       — added to ~/.claude/settings.json
+✓ SessionStart hook               — added to ~/.claude/settings.json
+✓ PostToolUse hook (graphify)     — added to ~/.claude/settings.json
+✓ PostToolUse hook (intent)       — added to ~/.claude/settings.json
+✓ PostToolUse hook (bash/git)     — added to ~/.claude/settings.json
+✓ PostToolUse hook (read counter) — added to ~/.claude/settings.json
+✓ PostToolUse hook (edit/ratio)   — added to ~/.claude/settings.json
+✓ UserPromptSubmit hook           — added to ~/.claude/settings.json
 ✓ Morph MCP                   — configured (key found automatically)
 ✓ Prompt optimizer            — enabled
 ✓ Session monitor             — enabled
