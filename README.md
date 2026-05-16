@@ -25,10 +25,8 @@ Sarthi is a Claude Code plugin that acts as an **intelligent routing layer** for
 mkdir -p ~/.claude/skills/plugin
 curl -fsSL https://raw.githubusercontent.com/rahulbindra/sarthi/main/skills/plugin/SKILL.md \
   -o ~/.claude/skills/plugin/SKILL.md
-```
-Then add one line to `~/.claude/CLAUDE.md`:
-```
-- **plugin** (`~/.claude/skills/plugin/SKILL.md`) - Plugin manager for Claude Code. Trigger: `/plugin`
+echo '- **plugin** (`~/.claude/skills/plugin/SKILL.md`) - Plugin manager for Claude Code. Trigger: `/plugin`' \
+  >> ~/.claude/CLAUDE.md
 ```
 
 **Then inside Claude Code:**
@@ -74,11 +72,8 @@ Sarthi works with any subset — or none at all. **Recommended start:** compound
 mkdir -p ~/.claude/skills/plugin
 curl -fsSL https://raw.githubusercontent.com/rahulbindra/sarthi/main/skills/plugin/SKILL.md \
   -o ~/.claude/skills/plugin/SKILL.md
-```
-
-Add one line to `~/.claude/CLAUDE.md`:
-```
-- **plugin** (`~/.claude/skills/plugin/SKILL.md`) - Plugin manager for Claude Code. Trigger: `/plugin`
+echo '- **plugin** (`~/.claude/skills/plugin/SKILL.md`) - Plugin manager for Claude Code. Trigger: `/plugin`' \
+  >> ~/.claude/CLAUDE.md
 ```
 
 ### Step 2 — Install Sarthi (inside Claude Code)
