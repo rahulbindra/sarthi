@@ -89,7 +89,6 @@ Confirm success or surface the error. If npm is unavailable: "npm required — i
 Show: "Morph MCP will be auto-configured in Step 5 — no API key needed for the free plan."
 
 **compound-engineering:**
-Copy skills from the local plugin cache (already downloaded when you ran `/plugin install` previously), falling back to a direct GitHub clone:
 ```bash
 CACHE="$HOME/.claude/plugins/cache/compound-engineering-plugin/compound-engineering"
 if [ -d "$CACHE" ]; then
@@ -97,13 +96,10 @@ if [ -d "$CACHE" ]; then
   cp -r "$CACHE/$LATEST/skills/." "$HOME/.claude/skills/"
   echo "✓ compound-engineering installed from cache (v$LATEST)"
 else
-  TMP=$(mktemp -d)
-  git clone --depth=1 https://github.com/EveryInc/compound-engineering-plugin.git "$TMP/ce" 2>&1 | tail -2
-  cp -r "$TMP/ce/skills/." "$HOME/.claude/skills/"
-  rm -rf "$TMP"
-  echo "✓ compound-engineering installed from GitHub"
+  echo "not-cached"
 fi
 ```
+If `not-cached`: show `Run: /plugin install compound-engineering@compound-engineering-plugin — then type "done" to continue.` Wait for "done", then re-run the cache check above.
 
 **firecrawl:**
 ```bash
@@ -113,13 +109,10 @@ if [ -d "$CACHE" ]; then
   cp -r "$CACHE/$LATEST/skills/." "$HOME/.claude/skills/"
   echo "✓ firecrawl installed from cache (v$LATEST)"
 else
-  TMP=$(mktemp -d)
-  git clone --depth=1 https://github.com/anthropics/claude-plugins-official.git "$TMP/cp" 2>&1 | tail -2
-  cp -r "$TMP/cp/firecrawl/skills/." "$HOME/.claude/skills/"
-  rm -rf "$TMP"
-  echo "✓ firecrawl installed from GitHub"
+  echo "not-cached"
 fi
 ```
+If `not-cached`: show `Run: /plugin install firecrawl@claude-plugins-official — then type "done" to continue.` Wait for "done", then re-run the cache check above.
 
 **codex:**
 ```bash
@@ -129,13 +122,10 @@ if [ -d "$CACHE" ]; then
   cp -r "$CACHE/$LATEST/skills/." "$HOME/.claude/skills/"
   echo "✓ codex installed from cache (v$LATEST)"
 else
-  TMP=$(mktemp -d)
-  git clone --depth=1 https://github.com/openai/codex-plugin-cc.git "$TMP/codex" 2>&1 | tail -2
-  cp -r "$TMP/codex/skills/." "$HOME/.claude/skills/"
-  rm -rf "$TMP"
-  echo "✓ codex installed from GitHub"
+  echo "not-cached"
 fi
 ```
+If `not-cached`: show `Run: /plugin install codex@openai-codex — then type "done" to continue.` Wait for "done", then re-run the cache check above.
 
 **superpowers:**
 ```bash
@@ -145,13 +135,10 @@ if [ -d "$CACHE" ]; then
   cp -r "$CACHE/$LATEST/skills/." "$HOME/.claude/skills/"
   echo "✓ superpowers installed from cache (v$LATEST)"
 else
-  TMP=$(mktemp -d)
-  git clone --depth=1 https://github.com/anthropics/claude-plugins-official.git "$TMP/cp" 2>&1 | tail -2
-  cp -r "$TMP/cp/superpowers/skills/." "$HOME/.claude/skills/"
-  rm -rf "$TMP"
-  echo "✓ superpowers installed from GitHub"
+  echo "not-cached"
 fi
 ```
+If `not-cached`: show `Run: /plugin install superpowers@claude-plugins-official — then type "done" to continue.` Wait for "done", then re-run the cache check above.
 
 After all selected installs complete, re-run the Step 0 detection checks and show an updated gap table so the user sees what is now ready.
 
