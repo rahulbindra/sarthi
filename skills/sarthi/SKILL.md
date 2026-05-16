@@ -254,11 +254,20 @@ Run the following three checks in sequence. Each is independently opt-in and ski
 
 **These checks apply before every user task — including mid-session follow-ups that feel like obvious continuations. "The next step feels obvious" is not a reason to skip. If you find yourself routing without running these, stop and run them first.**
 
-**Check 1 — Session monitor:**
+**Check 1 — Session monitor (runs every 10th prompt):**
+
+Increment the session-scoped prompt counter and fire only when it hits a multiple of 10:
 ```bash
-[ -f ~/.claude/.sarthi-session-monitor-enabled ] && echo "enabled" || echo "disabled"
+[ -f ~/.claude/.sarthi-session-monitor-enabled ] && {
+  COUNT=$(cat ~/.claude/.sarthi-session-counter 2>/dev/null || echo 0)
+  COUNT=$((COUNT + 1))
+  echo $COUNT > ~/.claude/.sarthi-session-counter
+  [ $((COUNT % 10)) -eq 0 ] && echo "monitor:fire" || echo "monitor:skip"
+} || echo "monitor:disabled"
 ```
-If enabled — invoke `sarthi-session-monitor`. It checks estimated context fill and fires a non-blocking warning at 90% (once) and 100% (once) per session. Exits silently if below threshold or both marks already fired.
+
+If `monitor:fire` — invoke `sarthi-session-monitor`. It checks context fill and fires a non-blocking warning at 90% (once) and 100% (once) per session.
+If `monitor:skip` or `monitor:disabled` — skip silently. The counter resets to 0 at session start via the SessionStart hook.
 
 **Check 2 — Prompt optimizer:**
 ```bash
@@ -275,6 +284,17 @@ If enabled — invoke `sarthi-model-advisor`. It scores task complexity and sugg
 ---
 
 ## Step 2: Route by Intent
+
+### Dynamic routing overrides (checked first)
+
+Before consulting the static routing table, read user-learned overrides:
+```bash
+cat ~/.claude/.sarthi-routing-overrides.json 2>/dev/null || echo '{"version":1,"overrides":[]}'
+```
+
+Normalise the user's prompt (lowercase, collapse whitespace, strip non-alphanumeric). Check each override's `normalised` field for an exact match. If found, route to the `skill` specified in that entry immediately — skip the static table entirely.
+
+If no match — fall through to the static routing table below.
 
 ### Build / Implement
 **Signal:** "build", "implement", "add", "create", "make", "write", "develop", "scaffold", "wire up", "integrate", "extend", "set up", "generate", "new feature"
@@ -666,7 +686,30 @@ Present inline without waiting for "sarthi learn":
 > Signal words to catch it: [2–3 suggested keywords]
 > [y] Add to routing  [n] Skip"
 
-If [y]: update the Signal line in the matching intent in Step 2 of this SKILL.md and sync to `~/sarthi/skills/sarthi/SKILL.md`. Confirm: "Signal added — this phrase will route automatically in future sessions."
+If [y]: write to `~/.claude/.sarthi-routing-overrides.json` (never edit SKILL.md — overrides survive Sarthi updates without merge conflicts):
+```bash
+python3 -c "
+import json, os, re
+from datetime import datetime, timezone
+path = os.path.expanduser('~/.claude/.sarthi-routing-overrides.json')
+try:
+    d = json.load(open(path))
+except:
+    d = {'version': 1, 'overrides': []}
+def norm(s): return re.sub(r'\W+', ' ', s.lower()).strip()
+d['overrides'].append({
+    'phrase': 'USER_PHRASE',
+    'normalised': norm('USER_PHRASE'),
+    'intent': 'SUGGESTED_INTENT',
+    'skill': 'SUGGESTED_SKILL',
+    'added': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+    'source': 'auto-propose'
+})
+json.dump(d, open(path, 'w'), indent=2)
+" 2>/dev/null || true
+```
+
+Substitute `USER_PHRASE`, `SUGGESTED_INTENT`, and `SUGGESTED_SKILL` with actual values. Confirm: "Signal added to routing overrides — this phrase will route automatically in future sessions without modifying skill files."
 
 If [n]: append a `rejected_proposal` entry to the intent log and proceed:
 ```bash
@@ -727,7 +770,7 @@ When triggered manually:
 2. Group `"unrouted"` entries by normalised phrase (lowercase, collapse whitespace, strip punctuation)
 3. For any cluster not already proposed (no matching `rejected_proposal` entry with the same normalised phrase), propose a signal word and the intent it maps to
 4. Present proposals to the user — approve or reject each
-5. On approval, update the Signal line in the matching intent in Step 2 of this SKILL.md and sync the change to `~/sarthi/skills/sarthi/SKILL.md`
+5. On approval, write to `~/.claude/.sarthi-routing-overrides.json` using the same format as auto-propose (source: `"sarthi-learn"`). Never edit SKILL.md — overrides survive Sarthi updates without merge conflicts.
 
 Keep the log unbounded — it is the source of truth for routing improvement over time.
 
