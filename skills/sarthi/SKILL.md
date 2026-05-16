@@ -244,9 +244,14 @@ command -v codeburn > /dev/null && echo "codeburn:yes" || echo "codeburn:no"
 
 # Morph MCP (fast code application)
 jq -e '.mcpServers["morph-mcp"]' ~/.claude.json > /dev/null 2>&1 && echo "morph:yes" || echo "morph:no"
-```
 
-Also check the skills list for: `ce-work` (compound-engineering), `firecrawl-search` (firecrawl), `codex` (codex plugin), `revise-claude-md` (claude-md-management), `dispatching-parallel-agents` (superpowers).
+# Plugin-installed skills (plugins live in cache, not ~/.claude/skills/)
+[ -d ~/.claude/plugins/cache/compound-engineering-plugin ] && echo "compound:yes" || echo "compound:no"
+[ -d ~/.claude/plugins/cache/claude-plugins-official/firecrawl ] && echo "firecrawl:yes" || echo "firecrawl:no"
+[ -d ~/.claude/plugins/cache/claude-plugins-official/superpowers ] && echo "superpowers:yes" || echo "superpowers:no"
+[ -d ~/.claude/plugins/cache/claude-plugins-official/frontend-design ] && echo "frontend-design:yes" || echo "frontend-design:no"
+[ -d ~/.claude/plugins/cache/openai-codex/codex ] && echo "codex:yes" || echo "codex:no"
+```
 
 Build a mental map of what's available. **Only route to tools that exist.**
 
@@ -485,6 +490,17 @@ Use these chains proactively — don't wait for the user to ask for multiple too
 |-----------|-------|
 | firecrawl | `/firecrawl-search` or `/firecrawl-scrape` |
 | vanilla Claude | WebFetch on provided URLs |
+
+### Wiki / Knowledge Base
+**Signal:** "build a wiki", "llm wiki", "second brain", "personal wiki", "knowledge base", "karpathy wiki", "ingest this", "ingest document", "add to my wiki", "add to wiki", "query my wiki", "wiki query", "wiki ingest", "wiki lint", "wiki status", "wiki init", "sarthi wiki", "wiki link", "knowledge graph for"
+
+| Available | Route |
+|-----------|-------|
+| always | `/sarthi-wiki` — init a vault, ingest documents, query, lint, or check status |
+
+> Distinct from graphify (codebase AST graph) and firecrawl (live web scraping). Use when the user wants a persistent, queryable knowledge base from their own documents — articles, transcripts, meeting notes, research.
+
+> **Private wikis stay local.** Wiki vaults live in user-chosen directories. No vault content is ever committed to the Sarthi repository.
 
 ### Git Audit / Review
 **Signal:** "audit git", "review git", "git audit", "git review", "git health", "check git", "git status report", "review the git", "audit the git"
