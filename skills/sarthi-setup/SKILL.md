@@ -9,13 +9,13 @@ Run this skill once after installing Sarthi. It configures everything automatica
 
 ## What this does
 
-1. Adds the Sarthi SessionStart hook to `~/.claude/settings.json`
-2. Adds the graphify PostToolUse hook to `~/.claude/settings.json`
-3. Installs codeburn menubar (if codeburn is installed)
-4. Optionally sets `ANTHROPIC_API_KEY` in your shell profile (needed for graphify; skippable)
-5. Optionally configures the Morph MCP server in `~/.claude.json` (enables fast bulk edits; skippable)
-6. Optionally enables the prompt optimizer, session monitor, and model advisor (opt-in advisors)
-7. Optionally installs a global pre-commit hook that scans staged files for hardcoded secrets before every git commit
+1. Detects missing Sarthi-compatible tools and installs what it can automatically
+2. Adds all Sarthi hooks to `~/.claude/settings.json` (SessionStart, PostToolUse, UserPromptSubmit)
+3. Auto-configures Morph MCP server in `~/.claude.json` (free plan — no API key required)
+4. Auto-enables all three advisors (prompt optimizer, session monitor, model advisor)
+5. Auto-installs a global pre-commit hook that scans staged files for hardcoded secrets
+6. Optionally sets `ANTHROPIC_API_KEY` in your shell profile (needed for graphify graph building)
+7. Installs codeburn menubar (if codeburn is installed)
 
 ## Steps
 
@@ -55,7 +55,7 @@ For each missing tool, show a one-line install hint below the table:
 |------|-------------|
 | graphify | `pip install graphifyy` (note: two y's — PyPI package) |
 | codeburn | `npm install -g codeburn` |
-| morph | get API key at morphllm.com — Step 5 below will configure it |
+| morph | Step 5 will auto-configure it — free plan, no API key needed |
 | firecrawl | `/plugin install firecrawl@claude-plugins-official` |
 | compound-engineering | `/plugin install compound-engineering@compound-engineering-plugin` |
 | codex | `/plugin install codex@openai-codex` |
@@ -69,7 +69,7 @@ If any tools are missing, offer to install them now. Load `AskUserQuestion` via 
 
 > "Which missing tools would you like to set up now? (I'll handle what I can automatically — select all that apply)"
 
-Wait for the user's selection. If nothing selected or skipped — continue to Step 1.
+Wait for the user's selection. If nothing selected or skipped — continue to Step 0c.
 
 For each selected tool, attempt setup in this order:
 
@@ -86,29 +86,47 @@ npm install -g codeburn 2>&1
 Confirm success or surface the error. If npm is unavailable: "npm required — install Node.js from nodejs.org first, then re-run /sarthi-setup."
 
 **morph (MCP):**
-Show: "Morph needs an API key — skipping to Step 5 which handles this interactively." (Step 5 of this setup already covers the full Morph MCP configuration flow.)
+Show: "Morph MCP will be auto-configured in Step 5 — no API key needed for the free plan."
 
 **firecrawl / compound-engineering / codex / superpowers (skill plugins):**
-For each selected skill plugin, show the exact install command:
+For all selected skill plugins, show ALL their install commands together in one block:
 
-| Plugin | Install command |
-|--------|----------------|
-| compound-engineering | `/plugin install compound-engineering@compound-engineering-plugin` |
-| firecrawl | `/plugin install firecrawl@claude-plugins-official` |
-| codex | `/plugin install codex@openai-codex` |
-| superpowers | `/plugin install superpowers@claude-plugins-official` |
-
-Show:
 ```
-Run this command in your Claude Code terminal:
-  /plugin install [tool]@[source]
+Run these in your Claude Code terminal (one per line):
 
-Then re-run /sarthi-setup to confirm detection.
+  /plugin install compound-engineering@compound-engineering-plugin
+  /plugin install firecrawl@claude-plugins-official
+  /plugin install codex@openai-codex
+  /plugin install superpowers@claude-plugins-official
+
+(Only run the ones you selected above.)
+
+Type "done" when finished — setup will continue automatically.
 ```
 
-After attempting all selected installs, re-run the Step 0 detection checks and show an updated gap table so the user sees what is now ready.
+Wait for the user to type "done" (or any acknowledgment). Then re-run the Step 0 detection checks silently and continue — do NOT ask the user to re-run `/sarthi-setup`.
 
-Continue to Step 1 regardless of outcomes.
+After all selected installs, re-run the Step 0 detection checks and show an updated gap table so the user sees what is now ready.
+
+Continue to Step 0c regardless of outcomes.
+
+### Step 0c — Confirm ANTHROPIC_API_KEY (only if graphify is installed or was just installed)
+
+Check if graphify is present and if the key is already in the shell profile:
+```bash
+command -v graphify > /dev/null 2>&1 && echo "graphify:present" || echo "graphify:absent"
+grep -r "ANTHROPIC_API_KEY" ~/.zshrc ~/.zprofile ~/.bashrc ~/.bash_profile ~/.profile 2>/dev/null | grep -v "^Binary" | grep -q . && echo "key:present" || echo "key:absent"
+```
+
+- If graphify is absent → skip this step silently.
+- If graphify is present and key is already set → skip this step silently.
+- If graphify is present and key is NOT set → ask once using `AskUserQuestion`:
+
+  > "Graphify needs ANTHROPIC_API_KEY to build the knowledge graph (Claude Code's OAuth key doesn't carry over). Add it to your shell profile now?"
+  > [y] Yes — paste my key
+  > [s] Skip — I'll add it manually later
+
+Store the user's choice as `api_key_choice`. Continue to Step 1.
 
 ---
 
@@ -190,29 +208,11 @@ jq '.hooks.UserPromptSubmit = (.hooks.UserPromptSubmit // []) + [{
 The SessionStart hook command should begin with:
 `rm -f ~/.claude/.sarthi-session-counter ~/.claude/.sarthi-session-warned 2>/dev/null; `
 
-### Step 4 — Set up ANTHROPIC_API_KEY for graphify (optional)
+### Step 4 — Set ANTHROPIC_API_KEY (if chosen in Step 0c)
 
-If graphify is installed, check whether `ANTHROPIC_API_KEY` is already exported:
-```bash
-grep -r "ANTHROPIC_API_KEY" ~/.zshrc ~/.zprofile ~/.bashrc ~/.bash_profile ~/.profile 2>/dev/null | grep -v "^$"
-```
+If `api_key_choice` is not "y" or Step 0c was skipped → skip this step silently.
 
-If it is already set, skip this step silently.
-
-If it is NOT set, ask the user:
-
-```
-Graphify needs its own ANTHROPIC_API_KEY to build the knowledge graph.
-(Claude Code uses OAuth — that key doesn't carry over to the graphify CLI.)
-
-Would you like to add it to your shell profile now?
-  [y] Yes — paste your key and I'll add it to ~/.zprofile (or your active profile)
-  [s] Skip — I'll set it up manually later
-
-Your choice (y/s):
-```
-
-If the user chooses **y**:
+If `api_key_choice` is "y":
 - Ask: "Paste your ANTHROPIC_API_KEY (starts with sk-ant-):"
 - Detect the active shell profile in this order: `~/.zprofile`, `~/.zshrc`, `~/.bash_profile`, `~/.bashrc`, `~/.profile` — use the first one that exists
 - Append to that file:
@@ -221,11 +221,7 @@ If the user chooses **y**:
   ```
 - Confirm: "Added to <profile path>. Run `source <profile path>` or open a new terminal for it to take effect."
 
-If the user chooses **s**:
-- Show: "Skipped. You can add it manually later: `export ANTHROPIC_API_KEY=sk-ant-...` in your shell profile."
-- Continue to next step.
-
-### Step 5 — Set up Morph MCP server (optional)
+### Step 5 — Auto-configure Morph MCP server (free plan)
 
 Check if Morph is already configured in `~/.claude.json`:
 ```bash
@@ -234,111 +230,40 @@ jq -e '.mcpServers["morph-mcp"]' ~/.claude.json > /dev/null 2>&1 && echo "config
 
 If already configured, skip this step silently.
 
-If NOT configured, ask the user:
+If NOT configured, auto-configure it now — no API key required for the free plan:
 
-```
-Morph enables fast bulk code edits via MCP — useful for refactors and renames across many files.
-
-Would you like to set it up now?
-  [y] Yes — paste your Morph API key and I'll configure it
-  [s] Skip — I'll set it up manually later (see morphllm.com)
-
-Your choice (y/s):
-```
-
-If the user chooses **y**:
-- Ask: "Paste your Morph API key (get one at morphllm.com):"
-- Ensure `~/.claude.json` exists before writing:
 ```bash
 [ -f ~/.claude.json ] || echo '{"mcpServers":{}}' > ~/.claude.json
-```
-- Add the MCP server entry to `~/.claude.json` using jq:
-```bash
 jq '.mcpServers["morph-mcp"] = {
   "type": "stdio",
   "command": "npx",
-  "args": ["--prefer-offline", "-y", "@morphllm/morphmcp@latest", "--api-key", "<key they pasted>"],
+  "args": ["--prefer-offline", "-y", "@morphllm/morphmcp@latest"],
   "env": {
-    "MORPH_API_KEY": "<key they pasted>",
     "DISABLED_TOOLS": ""
   }
 }' ~/.claude.json > /tmp/sarthi-claude-tmp.json && mv /tmp/sarthi-claude-tmp.json ~/.claude.json
 ```
-- Confirm: "Morph MCP configured in ~/.claude.json. It will be active after you restart Claude Code."
 
-If the user chooses **s**:
-- Show: "Skipped. Get a Morph API key at morphllm.com and re-run /sarthi-setup to add it."
-- Continue to next step.
+Confirm: "Morph MCP configured (free plan). Active after you restart Claude Code."
 
-### Step 6 — Enable Sarthi advisors (opt-in)
+### Step 6 — Auto-enable Sarthi advisors
 
-Check which are already enabled:
-```bash
-[ -f ~/.claude/.sarthi-prompt-optimizer-enabled ] && echo "optimizer:on" || echo "optimizer:off"
-[ -f ~/.claude/.sarthi-session-monitor-enabled ] && echo "monitor:on" || echo "monitor:off"
-[ -f ~/.claude/.sarthi-model-advisor-enabled ] && echo "advisor:on" || echo "advisor:off"
-```
+Enable all three advisors automatically — they are non-blocking and reversible at any time:
 
-If all three are already enabled, skip this step silently.
-
-If any are not enabled, ask:
-
-```
-Sarthi includes three optional advisors — each is non-blocking and can be turned off individually:
-
-  Prompt optimizer  — detects vague asks, missing deliverables, scope creep; suggests a tighter reword
-  Session monitor   — warns at ~90% and ~100% context fill (twice per session, never more)
-  Model advisor     — suggests Haiku / Sonnet / Opus based on task complexity
-
-  [y] Enable all three
-  [n] Skip all
-  [c] Choose individually
-
-Your choice (y/n/c):
-```
-
-**If [y] — enable all:**
 ```bash
 touch ~/.claude/.sarthi-prompt-optimizer-enabled
 touch ~/.claude/.sarthi-session-monitor-enabled
 touch ~/.claude/.sarthi-model-advisor-enabled
 ```
-Confirm: "All three advisors enabled."
 
-**If [n] — skip all:**
-Show: "Skipped. Enable individually any time:
-  `touch ~/.claude/.sarthi-prompt-optimizer-enabled`
-  `touch ~/.claude/.sarthi-session-monitor-enabled`
-  `touch ~/.claude/.sarthi-model-advisor-enabled`"
+(Skip any that are already enabled — `touch` is idempotent but note in summary if they were already on.)
 
-**If [c] — choose individually:**
-For each advisor that is not already enabled, ask in sequence:
+To disable any advisor later:
+- `rm ~/.claude/.sarthi-prompt-optimizer-enabled`
+- `rm ~/.claude/.sarthi-session-monitor-enabled`
+- `rm ~/.claude/.sarthi-model-advisor-enabled`
 
-*Prompt optimizer:*
-```
-Prompt optimizer — assesses prompts for inefficiency signals and suggests rewording.
-Learns from accept/reject decisions. Fires only when 2+ signals are present.
-  [y] Enable  [s] Skip
-```
-If y: `touch ~/.claude/.sarthi-prompt-optimizer-enabled`
-
-*Session monitor:*
-```
-Session monitor — warns at ~90% context (suggests /compact) and ~100% (recommends fresh session).
-Fires at most twice per session.
-  [y] Enable  [s] Skip
-```
-If y: `touch ~/.claude/.sarthi-session-monitor-enabled`
-
-*Model advisor:*
-```
-Model advisor — before each task, suggests Haiku / Sonnet / Opus based on complexity.
-Learns from your choices. Rejects twice → silent for the session.
-  [y] Enable  [s] Skip
-```
-If y: `touch ~/.claude/.sarthi-model-advisor-enabled`
-
-### Step 7 — Install pre-commit secrets scan (opt-in)
+### Step 7 — Auto-install pre-commit secrets scan
 
 Check if already configured:
 ```bash
@@ -347,20 +272,7 @@ Check if already configured:
 
 If already configured, skip this step silently.
 
-If NOT configured, ask:
-
-```
-Pre-commit secrets scan — scans staged files for hardcoded API keys, tokens,
-and private keys before every git commit. Blocks the commit if matches are found.
-Applies globally to all git repos on this machine.
-
-  [y] Yes — install global pre-commit hook
-  [s] Skip — I'll handle secrets scanning another way
-
-Your choice (y/s):
-```
-
-If the user chooses **y**:
+If NOT configured, install it automatically:
 
 1. Create the hooks directory:
 ```bash
@@ -423,11 +335,6 @@ chmod +x ~/.claude/.sarthi-hooks/pre-commit
 git config --global core.hooksPath ~/.claude/.sarthi-hooks
 ```
 
-Confirm: "Pre-commit secrets scan installed globally. Staged files will be checked before every git commit. To disable: `git config --global --unset core.hooksPath`"
-
-If the user chooses **s**:
-- Show: "Skipped. Install any time by re-running `/sarthi-setup`."
-
 ### Step 8 — Install codeburn menubar
 
 If codeburn is installed and menubar is not already running:
@@ -442,33 +349,28 @@ After completing the above, report clearly what was done and what was skipped (a
 ```
 Sarthi setup complete.
 
-✓ SessionStart hook          — added to ~/.claude/settings.json
-✓ PostToolUse hook (graphify) — added to ~/.claude/settings.json
-✓ PostToolUse hook (intent)  — added to ~/.claude/settings.json
-✓ UserPromptSubmit hook      — added to ~/.claude/settings.json
-✓ ANTHROPIC_API_KEY          — added to ~/.zprofile
-✓ Morph MCP                  — configured in ~/.claude.json
-✓ Prompt optimizer           — enabled
-✓ Session monitor            — enabled
-✓ Model advisor              — enabled
-✓ Pre-commit scan            — installed (~/.claude/.sarthi-hooks/pre-commit)
-✓ codeburn menubar           — launched
+✓ SessionStart hook           — added to ~/.claude/settings.json
+✓ PostToolUse hook (graphify)  — added to ~/.claude/settings.json
+✓ PostToolUse hook (intent)   — added to ~/.claude/settings.json
+✓ UserPromptSubmit hook       — added to ~/.claude/settings.json
+✓ Morph MCP (free plan)       — configured in ~/.claude.json
+✓ Prompt optimizer            — enabled
+✓ Session monitor             — enabled
+✓ Model advisor               — enabled
+✓ Pre-commit scan             — installed (~/.claude/.sarthi-hooks/pre-commit)
+✓ ANTHROPIC_API_KEY           — added to ~/.zprofile
+✓ codeburn menubar            — launched
 
 Restart Claude Code (or open a new session) for the hooks to take effect.
 ```
 
-If something was already configured, show `— already configured` instead of `— added`.
-If codeburn is not installed, show `— codeburn not installed, skipped`.
-If the user skipped the API key step, show `— skipped (set manually later)`.
-If ANTHROPIC_API_KEY was already in their profile, show `— already configured`.
-If the user skipped Morph, show `— skipped (morphllm.com to set up later)`.
-If Morph was already configured, show `— already configured`.
-For each advisor (prompt optimizer, session monitor, model advisor):
-- If enabled in this run, show `— enabled`
-- If already enabled before setup, show `— already enabled`
-- If skipped, show `— skipped (touch ~/.claude/.<flag-file> to enable)`
-If the user skipped pre-commit scan, show `— skipped (re-run /sarthi-setup to install)`.
-If pre-commit scan was already installed, show `— already installed`.
+Status variants:
+- Already configured before setup → `— already configured`
+- codeburn not installed → `— codeburn not installed, skipped`
+- ANTHROPIC_API_KEY skipped by user → `— skipped (add manually: export ANTHROPIC_API_KEY=sk-ant-... in your shell profile)`
+- ANTHROPIC_API_KEY already in profile → `— already configured`
+- Advisor already enabled before setup → `— already enabled`
+- Pre-commit scan already installed → `— already installed`
 
 ### Important
 
