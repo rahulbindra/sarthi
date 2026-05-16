@@ -29,10 +29,10 @@ Before configuring anything, check which Sarthi-compatible tools are installed v
 command -v graphify > /dev/null 2>&1 && echo "graphify:installed" || echo "graphify:missing"
 command -v codeburn > /dev/null 2>&1 && echo "codeburn:installed" || echo "codeburn:missing"
 jq -e '.mcpServers["morph-mcp"]' ~/.claude.json > /dev/null 2>&1 && echo "morph:configured" || echo "morph:missing"
-([ -d ~/.claude/skills/firecrawl-agent ] || [ -d ~/.claude/plugins/cache/claude-plugins-official/firecrawl ]) && echo "firecrawl:installed" || echo "firecrawl:missing"
-([ -d ~/.claude/skills/ce-work ] || [ -d ~/.claude/plugins/cache/compound-engineering-plugin/compound-engineering ]) && echo "compound:installed" || echo "compound:missing"
-([ -d ~/.claude/skills/codex-cli-runtime ] || [ -d ~/.claude/plugins/cache/openai-codex/codex ]) && echo "codex:installed" || echo "codex:missing"
-([ -d ~/.claude/skills/dispatching-parallel-agents ] || [ -d ~/.claude/plugins/cache/claude-plugins-official/superpowers ]) && echo "superpowers:installed" || echo "superpowers:missing"
+(jq -e '.enabledPlugins["firecrawl@claude-plugins-official"] == true' ~/.claude/settings.json > /dev/null 2>&1 || [ -d ~/.claude/skills/firecrawl-agent ] || [ -d ~/.claude/plugins/cache/claude-plugins-official/firecrawl ]) && echo "firecrawl:installed" || echo "firecrawl:missing"
+(jq -e '.enabledPlugins["compound-engineering@compound-engineering-plugin"] == true' ~/.claude/settings.json > /dev/null 2>&1 || [ -d ~/.claude/skills/ce-work ] || [ -d ~/.claude/plugins/cache/compound-engineering-plugin/compound-engineering ]) && echo "compound:installed" || echo "compound:missing"
+(jq -e '.enabledPlugins["codex@openai-codex"] == true' ~/.claude/settings.json > /dev/null 2>&1 || [ -d ~/.claude/skills/codex-cli-runtime ] || [ -d ~/.claude/plugins/cache/openai-codex/codex ]) && echo "codex:installed" || echo "codex:missing"
+(jq -e '.enabledPlugins["superpowers@claude-plugins-official"] == true' ~/.claude/settings.json > /dev/null 2>&1 || [ -d ~/.claude/skills/dispatching-parallel-agents ] || [ -d ~/.claude/plugins/cache/claude-plugins-official/superpowers ]) && echo "superpowers:installed" || echo "superpowers:missing"
 ```
 
 Show this table — mark each row ✓ (installed) or ✗ (missing):
@@ -114,7 +114,24 @@ else
   echo "not-cached"
 fi
 ```
-If `not-cached`: show `Run: /plugin install firecrawl@claude-plugins-official — then type "done" to continue.` Wait for "done", then re-run the cache check above.
+If `not-cached`: auto-install directly from GitHub — do not ask the user:
+```bash
+PLUGIN_TMP=$(mktemp -d)
+git clone --depth 1 https://github.com/mendableai/firecrawl "$PLUGIN_TMP/firecrawl-src" 2>&1
+if [ -d "$PLUGIN_TMP/firecrawl-src/skills" ]; then
+  cp -r "$PLUGIN_TMP/firecrawl-src/skills/." "$HOME/.claude/skills/"
+  echo "✓ firecrawl installed from GitHub"
+elif [ -f "$PLUGIN_TMP/firecrawl-src/.claude-plugin/marketplace.json" ]; then
+  # Plugin-style repo — copy skills from root
+  SOURCE=$(jq -r '.plugins[0].source // "./"' "$PLUGIN_TMP/firecrawl-src/.claude-plugin/marketplace.json")
+  cp -r "$PLUGIN_TMP/firecrawl-src/$SOURCE/skills/." "$HOME/.claude/skills/" 2>/dev/null || \
+  cp -r "$PLUGIN_TMP/firecrawl-src/skills/." "$HOME/.claude/skills/" 2>/dev/null
+  echo "✓ firecrawl installed from GitHub"
+else
+  echo "firecrawl:install-failed"
+fi
+```
+If `firecrawl:install-failed`: show the git error and tell the user: `Run: /plugin marketplace add https://github.com/mendableai/firecrawl`
 
 **codex:**
 ```bash
