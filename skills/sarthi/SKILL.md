@@ -660,6 +660,76 @@ If the user asks about a second codebase or project in the same session, stop an
 **9. Compact before context overflow**
 When a session grows large (many features implemented, long history, multiple large files read), proactively say: "This session is getting long — run /compact now to avoid a context overflow and keep the next task cheaper." Do this before the user hits the limit, not after.
 
+**10. Compact before heavy tasks**
+
+Classify the incoming task as heavy if it matches any of: build a feature, large refactor, cross-service debug, full audit, large codebase navigation with many file reads.
+
+If heavy AND the session prompt counter is > 20 (check `~/.claude/.sarthi-session-counter`), surface once per session:
+```
+⚡ Heavy task ahead — this session already has significant context.
+   Running /compact first would reduce the cost of this task by clearing prior history.
+   [c] I'll run /compact now, then come back   [s] Skip and proceed
+```
+If [c]: pause and wait. When the user returns, resume from this point.
+If [s]: proceed — note once: "Proceeding without compact — this task will cost more than it would on a fresh context."
+
+Session-suppress this check after one fire per session (same pattern as session monitor). Never fire for light tasks (questions, lookups, single-file edits).
+
+---
+
+## Step 3b: During-task scope guard
+
+**Active during implementation — not a pre-flight check.**
+
+When the Karpathy pre-flight runs and the user confirms scope, store the confirmed file list as `preflight_scope` in working context.
+
+Before editing any file during the task:
+1. Check if the file is in `preflight_scope`
+2. If **not** in scope — pause before making any change:
+   > "Scope alert: `[file]` wasn't in the original scope.
+   > Original scope: [list from pre-flight]
+   > [y] Add to scope and continue   [n] Stop here — don't touch this file"
+3. If [y]: add the file to `preflight_scope` and continue. Note in your response: "(scope expanded to include [file])"
+4. If [n]: do not edit the file. Find a way to complete the task within the original scope, or surface a blocker to the user.
+
+If the Karpathy pre-flight was skipped (trivial task): skip this check too.
+
+---
+
+## Step 3c: Post-task checks
+
+**Run after every non-trivial task completes — before saying "done".**
+
+**A. Cost estimate**
+
+Estimate tokens consumed during this task:
+- Exchanges: count message turns in this task × 1,500 tokens each
+- File reads: count Read tool calls × 800 tokens each
+- Bash/tool calls: count × 300 tokens each
+- File edits: count Edit/Write/Morph calls × 600 tokens each
+
+Sum the estimates. Express at Sonnet blended pricing (~$0.009 per 1k tokens):
+```
+Task cost estimate: ~[N]k tokens (~$[X])
+```
+Surface this as a single line at the end of your response. No need to explain the formula — just the number. Example: "Task cost estimate: ~18k tokens (~$0.16)"
+
+This is approximate (±30%) but directionally correct. It builds cost intuition without requiring codeburn.
+
+**B. Deliverable closure**
+
+If a deliverable was stated in Check 1 (either by the user or elicited by Sarthi), verify it was achieved before saying done.
+
+State explicitly:
+> "Deliverable: [original stated deliverable] — ✓ achieved" or "— ⚠ partially achieved: [what's still missing]"
+
+If partially achieved: do not mark the task done. Surface the gap and offer to continue:
+> "The following wasn't completed: [gap]. Continue? [y] Yes [n] No — that's close enough"
+
+If [n]: close cleanly with a note that the gap exists. Do not silently mark done.
+
+Skip deliverable closure for: informational questions, tasks where no deliverable was stated (check 1 was auto-skipped or it was a nav/research task).
+
 ---
 
 ## Step 4: Announce and Act
