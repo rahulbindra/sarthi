@@ -506,7 +506,41 @@ ls ~/wikis/ 2>/dev/null && echo "wikis:exist" || echo "wikis:none"
 [ -f ~/.claude/skills/researcher/SKILL.md ] && echo "researcher:installed" || echo "researcher:missing"
 ```
 
-**If `wikis:exist` AND signal is broad (topic not a specific one-shot URL fetch)**:
+**Step 1 — Wiki lookup (if wikis exist)**
+
+If `wikis:exist` — check whether any vault notes match the research query:
+```bash
+WIKIS=$(ls ~/wikis/ 2>/dev/null | tr '\n' '|' | sed 's/|$//')
+if [ ! -z "$WIKIS" ]; then
+  # Extract search terms from user's prompt (keywords, topics, first 5 nouns)
+  SEARCH_TERMS=$(echo "USER_PROMPT" | grep -oE '\b[a-zA-Z]{4,}\b' | head -5 | tr '\n' '|' | sed 's/|$//')
+  # Grep vault index files and note filenames for matches
+  grep -r "$SEARCH_TERMS" ~/wikis/*/index.md ~/wikis/*/README.md 2>/dev/null | cut -d: -f1 | sort -u
+fi
+```
+
+**If matching notes found:** Surface them before routing:
+```
+📚 Wiki match — your vaults contain notes on this topic:
+
+[list matched note titles with vault names]
+
+Use one of these notes as context:
+  [1] Load [note name] → continue with [firecrawl/WebFetch]
+  [2] Combine — use wiki note + fetch fresh sources
+  [3] Just fetch — ignore wiki, go direct to web
+
+```
+
+- [1]: paste the wiki note into context inline, then proceed with routing (skip firecrawl/WebFetch, use vanilla Claude)
+- [2]: paste the wiki note + route to firecrawl/WebFetch for current-day updates alongside
+- [3]: skip wiki, proceed to normal fetch route below
+
+**If no matching notes found:** Proceed to Step 2.
+
+**Step 2 — Broad research signal detection**
+
+If `wikis:exist` AND signal is broad (topic not a specific one-shot URL fetch):
 
 Check whether the researcher agent is installed:
 
@@ -541,6 +575,32 @@ Check whether the researcher agent is installed:
 Not installed (optional — adds autonomous multi-source research):
   researcher → mkdir -p ~/.claude/skills/researcher && cp ~/sarthi/skills/researcher/SKILL.md ~/.claude/skills/researcher/SKILL.md
 ```
+
+**Step 3 — Post-research ingest offer (runs after every successful fetch)**
+
+After completing any web research or knowledge question that returns substantive findings AND `wikis:exist`:
+
+1. Infer the best matching vault from the topic (e.g., "Amazon ads attribution" → `retail-media`)
+2. Check if the topic was a wiki miss in Step 1 — if so, offer to backfill
+3. Surface once at the end of the response:
+
+```
+📥 Save to wiki? This isn't in your vaults yet.
+   Suggested: ~/wikis/[vault-name]/wiki/[kebab-topic].md
+   [y] Save now  [n] Skip
+```
+
+If [y]: immediately write the note in the correct vault format (frontmatter + detail + related + sources), update `index.md`, append to `log.md`. Match the existing vault's page format from its `CLAUDE.md`.
+If [n]: skip silently. Do not ask again for the same topic this session.
+
+**Ingest is automatic (no prompt needed) when:**
+- The user explicitly says "save to wiki", "add to [vault]", or names a specific file path
+- The user has already approved ingest for a previous research result in this session
+
+**Skip the offer when:**
+- The research was a one-liner factual answer (under 3 sentences)
+- The topic is too session-specific or ephemeral to be worth persisting
+- `wikis:none`
 
 ### Wiki / Knowledge Base
 **Signal:** "build a wiki", "llm wiki", "second brain", "personal wiki", "knowledge base", "karpathy wiki", "ingest this", "ingest document", "add to my wiki", "add to wiki", "query my wiki", "wiki query", "wiki ingest", "wiki lint", "wiki status", "wiki init", "sarthi wiki", "wiki link", "knowledge graph for"
