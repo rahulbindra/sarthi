@@ -34,7 +34,14 @@ If `codeburn:due` (or timestamp file doesn't exist) — add this line to the onb
 
 **1c. Check weekly project audit cadence (per-project):**
 
-Derive a project slug from the current directory — this scopes the audit clock to this project, not the machine:
+Only runs in git repositories — skip entirely if not in a git repo:
+```bash
+git rev-parse --git-dir > /dev/null 2>&1 && echo "git:yes" || echo "git:no"
+```
+
+If `git:no` → skip this step entirely, do not add anything to the onboarding prompt.
+
+If `git:yes` — derive a project slug from the current directory and check audit cadence:
 ```bash
 PROJECT_SLUG=$(basename "$(pwd)" | tr -cs 'a-zA-Z0-9' '-' | sed 's/-*$//'); AUDIT_TS="$HOME/.claude/.sarthi-audit-ts-$PROJECT_SLUG"; ([ ! -f "$AUDIT_TS" ] || python3 -c "import os,time,sys; p=sys.argv[1]; exit(0 if time.time()-os.path.getmtime(p)>604800 else 1)" "$AUDIT_TS" 2>/dev/null) && echo "audit:due" || echo "audit:recent"
 ```
@@ -90,10 +97,39 @@ This removes the need to manually paste /goal at session start. If no sprint goa
 - No graph → run `graphify extract .` silently in background
 - Graph exists → run `graphify update .` silently
 
-**3. Present this prompt to the user** — only list tools that were actually detected:
+**3. Present the welcome prompt** — condensed by default, full list only when tools change.
 
+First, compute a hash of the currently-detected tools and compare to the last saved hash:
+
+```bash
+python3 -c "
+import json, os, hashlib
+cache = os.path.expanduser('~/.claude/.sarthi-tool-cache.json')
+last_hash_path = os.path.expanduser('~/.claude/.sarthi-last-tool-hash')
+try:
+    tools = json.load(open(cache)).get('tools', {})
+    present = sorted(k for k,v in tools.items() if v not in ('no','missing','none'))
+    h = hashlib.md5('|'.join(present).encode()).hexdigest()[:8]
+    last = open(last_hash_path).read().strip() if os.path.exists(last_hash_path) else ''
+    print(f'hash:{h}')
+    print('changed:yes' if h != last else 'changed:no')
+    print(f'count:{len(present)}')
+except Exception as e:
+    print('hash:unknown')
+    print('changed:yes')
+    print('count:0')
+" 2>/dev/null
 ```
-Sarthi ready. Here's what's active this session:
+
+**If `changed:no`** — show the condensed one-liner and skip the full list:
+```
+Sarthi ready — [N] tools active. Skip any? Type "skip <name>" or just start working.
+```
+Do NOT show the full tool list or "Not installed" section. If nothing is detected, skip this prompt entirely.
+
+**If `changed:yes` or first run** — show the full list (only detected tools):
+```
+Sarthi ready. Tools active this session:
 
   [1] compound-engineering  — build, debug, review, ship, frontend, strategy, brainstorm
   [2] graphify              — codebase navigation via knowledge graph
@@ -107,10 +143,22 @@ Skip any tool for this session? Type e.g. "skip 3 5" — or just start working t
 Skipped tools fall back to standard Claude behaviour.
 ```
 
-Only show rows for tools that are detected. If nothing is detected, skip this prompt entirely and behave as vanilla Claude.
+After showing the full list, save the hash:
+```bash
+python3 -c "
+import json, os, hashlib
+cache = os.path.expanduser('~/.claude/.sarthi-tool-cache.json')
+last_hash_path = os.path.expanduser('~/.claude/.sarthi-last-tool-hash')
+try:
+    tools = json.load(open(cache)).get('tools', {})
+    present = sorted(k for k,v in tools.items() if v not in ('no','missing','none'))
+    h = hashlib.md5('|'.join(present).encode()).hexdigest()[:8]
+    open(last_hash_path, 'w').write(h)
+except: pass
+" 2>/dev/null
+```
 
-**After the active tools list, if any tools were NOT detected in Step 1, append a "Not installed" section to the welcome prompt.** Only include tools that were actually absent:
-
+**"Not installed" section** — only shown on `changed:yes` runs, appended after the full list:
 ```
 Not installed (optional — adds routing for: [comma-list of missing capabilities]):
   graphify  →  npm install -g graphify-cli
@@ -122,7 +170,9 @@ Not installed (optional — adds routing for: [comma-list of missing capabilitie
   superpowers → install the superpowers skill plugin
 ```
 
-Show only the missing rows. If all tools are installed, omit this section entirely.
+Show only missing rows. If all tools are installed, omit entirely. Never show on condensed runs.
+
+**Type `sarthi status`** at any time to see the full tool list regardless of whether it changed.
 
 **4. Wait for the user's response:**
 - If they say `skip N [N...]` — mark those tools as disabled for the session. Apply vanilla Claude fallback for their intent categories.
@@ -232,28 +282,66 @@ When Sarthi routes any diagram creation or edit task, enforce these rules before
 
 ## Step 1: Detect Available Tools (run once per session)
 
-Silently check what's installed before routing:
+**Use the cache if fresh — skip the bash block entirely on most session starts.**
 
 ```bash
-# Knowledge graph
-[ -f "graphify-out/graph.json" ] && echo "graphify:graph" || echo "graphify:none"
-command -v graphify > /dev/null && echo "graphify:cli" || echo "graphify:missing"
+python3 -c "
+import json, os, time
+cache = os.path.expanduser('~/.claude/.sarthi-tool-cache.json')
+try:
+    d = json.load(open(cache))
+    age = time.time() - d.get('ts', 0)
+    if age < 7200:
+        for k, v in d['tools'].items(): print(f'{k}:{v}')
+        print('cache:hit')
+        exit(0)
+except: pass
+print('cache:miss')
+" 2>/dev/null
+```
 
-# Cost analytics
-command -v codeburn > /dev/null && echo "codeburn:yes" || echo "codeburn:no"
+If output contains `cache:hit` — use those key:value pairs as the tool map. Skip the detection block below entirely.
 
-# Morph MCP (fast code application)
-jq -e '.mcpServers["morph-mcp"]' ~/.claude.json > /dev/null 2>&1 && echo "morph:yes" || echo "morph:no"
+If `cache:miss` — run detection and write cache:
 
-# Plugin-installed skills (plugins live in cache, not ~/.claude/skills/)
-[ -d ~/.claude/plugins/cache/compound-engineering-plugin ] && echo "compound:yes" || echo "compound:no"
-[ -d ~/.claude/plugins/cache/claude-plugins-official/firecrawl ] && echo "firecrawl:yes" || echo "firecrawl:no"
-[ -d ~/.claude/plugins/cache/claude-plugins-official/superpowers ] && echo "superpowers:yes" || echo "superpowers:no"
-[ -d ~/.claude/plugins/cache/claude-plugins-official/frontend-design ] && echo "frontend-design:yes" || echo "frontend-design:no"
-[ -d ~/.claude/plugins/cache/openai-codex/codex ] && echo "codex:yes" || echo "codex:no"
+```bash
+# Detection
+GRAPHIFY_GRAPH=$([ -f "graphify-out/graph.json" ] && echo "graph" || echo "none")
+GRAPHIFY_CLI=$(command -v graphify > /dev/null && echo "cli" || echo "missing")
+CODEBURN=$(command -v codeburn > /dev/null && echo "yes" || echo "no")
+MORPH=$(jq -e '.mcpServers["morph-mcp"]' ~/.claude.json > /dev/null 2>&1 && echo "yes" || echo "no")
+COMPOUND=$([ -d ~/.claude/plugins/cache/compound-engineering-plugin ] && echo "yes" || echo "no")
+FIRECRAWL=$([ -d ~/.claude/plugins/cache/claude-plugins-official/firecrawl ] && echo "yes" || echo "no")
+SUPERPOWERS=$([ -d ~/.claude/plugins/cache/claude-plugins-official/superpowers ] && echo "yes" || echo "no")
+FRONTEND=$([ -d ~/.claude/plugins/cache/claude-plugins-official/frontend-design ] && echo "yes" || echo "no")
+CODEX=$([ -d ~/.claude/plugins/cache/openai-codex/codex ] && echo "yes" || echo "no")
+
+echo "graphify:graph:$GRAPHIFY_GRAPH"
+echo "graphify:cli:$GRAPHIFY_CLI"
+echo "codeburn:$CODEBURN"
+echo "morph:$MORPH"
+echo "compound:$COMPOUND"
+echo "firecrawl:$FIRECRAWL"
+echo "superpowers:$SUPERPOWERS"
+echo "frontend-design:$FRONTEND"
+echo "codex:$CODEX"
+
+# Write cache
+python3 -c "
+import json, os, time
+tools = {
+  'graphify:graph': '$GRAPHIFY_GRAPH', 'graphify:cli': '$GRAPHIFY_CLI',
+  'codeburn': '$CODEBURN', 'morph': '$MORPH', 'compound': '$COMPOUND',
+  'firecrawl': '$FIRECRAWL', 'superpowers': '$SUPERPOWERS',
+  'frontend-design': '$FRONTEND', 'codex': '$CODEX'
+}
+json.dump({'ts': time.time(), 'tools': tools}, open(os.path.expanduser('~/.claude/.sarthi-tool-cache.json'), 'w'))
+" 2>/dev/null
 ```
 
 Build a mental map of what's available. **Only route to tools that exist.**
+
+> To force a fresh detection (after installing a new tool): `rm ~/.claude/.sarthi-tool-cache.json`
 
 > **Morph note:** If `morph:yes`, the Morph MCP server is available but edits do NOT route through it automatically. Claude must explicitly call `mcp__morph-mcp__edit_file` instead of the native `Edit` tool. Surface Morph proactively when a task touches 3 or more files and instruct: use `mcp__morph-mcp__edit_file` for every edit in that task.
 
